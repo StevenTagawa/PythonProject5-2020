@@ -1,0 +1,37 @@
+{% extends "layout.html" %}
+
+{% block header %}
+    <div class="container">
+        <div class="site-header">
+            <span class="title">Learning Journal</span>
+            {% if current_user.is_authenticated %}
+                <a class="button icon-right" href="new.html"><span>New Entry</span> <i class="material-icons">add</i></a>
+                <a class="button icon-right-row2" href="logout.html"><span>Log Out</span> <i class="material-icons">person_outline</i></a>
+            {% else %}
+                <a class="button icon-right" href="register.html"><span>Register</span> <i class="material-icons">person_add</i></a>
+                <a class="button icon-right-row2" href="login.html"><span>Log In</span> <i class="material-icons">person</i></a>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}
+
+{% block content %}
+    <div class="entry-list">
+        <article>
+            <h2><a href="detail.html">The best day I’ve ever had</a></h2>
+            <time datetime="2016-01-31">January 31, 2016</time>
+        </article>
+        <article>
+            <h2><a href="detail_2.html">The absolute worst day I’ve ever had</a></h2>
+            <time datetime="2016-01-31">January 31, 2016</time>
+        </article>
+        <article>
+            <h2><a href="detail_3.html">That time at the mall</a></h2>
+            <time datetime="2016-01-31">January 31, 2016</time>
+        </article>
+        <article>
+            <h2><a href="detail_4.html">Dude, where’s my car?</a></h2>
+            <time datetime="2016-01-31">January 31, 2016</time>
+        </article>
+    </div>
+{% endblock %}
