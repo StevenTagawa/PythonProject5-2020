@@ -75,7 +75,7 @@ def show_entries():
     return render_template("entries.html")
 
 
-@app.route('/register', methods=('GET', 'POST'))
+@app.route("/register", methods=("GET", "POST"))
 def register():
     form = forms.RegisterForm()
     if form.validate_on_submit():
@@ -85,8 +85,8 @@ def register():
             password=form.password.data,
             god=False
         )
-        return redirect(url_for('index'))
-    return render_template('register.html', form=form)
+        return redirect(url_for("index"))
+    return render_template("form.html", button="Register", form=form)
 
 
 @app.route('/login', methods=('GET', 'POST'))
@@ -94,24 +94,24 @@ def login():
     form = forms.LoginForm()
     if form.validate_on_submit():
         try:
-            user = models.User.get(models.User.email == form.email.data)
+            user = models.User.get(models.User.username == form.username.data)
         except models.DoesNotExist:
-            flash("Your email or password doesn't match!", "error")
+            flash("Incorrect username or password.", "error")
         else:
             if check_password_hash(user.password, form.password.data):
                 login_user(user)
-                flash("You've been logged in!", "success")
-                return redirect(url_for('index'))
+                flash("Login successful.", "success")
+                return redirect(url_for("index"))
             else:
-                flash("Your email or password doesn't match!", "error")
-    return render_template('login.html', form=form)
+                flash("Incorrect username or password.", "error")
+    return render_template("form.html", button="Log In", form=form)
 
 
-@app.route('/logout')
+@app.route("/logout")
 @login_required
 def logout():
     logout_user()
-    flash("You've been logged out! Come back soon!", "success")
+    flash("Logout successful.", "success")
     return redirect(url_for('index'))
 
 

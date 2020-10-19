@@ -218,14 +218,9 @@ ul li a {
    Form Styles
    ========================================================================== */
 
-
-form label {
-	display: block;
-	margin-bottom: 8px;
-}
-form input[type=text],
-form input[type=password],
-form input[type=date],
+form field-username,
+form field-password,
+form field-password2,
 form textarea {
 	border: 2px solid #e1e1e1;
 	font-size: 18px;
@@ -235,9 +230,9 @@ form textarea {
 	border-radius: 4px;
 	width: calc(100% - 32px);
 }
-form input[type=text]:focus,
-form input[type=date]:focus,
-form input[type=password]:focus,
+form field-username:focus,
+form field-password:focus,
+form field-password2:focus,
 form textarea:focus {
 	outline: 0;
 	border-color: #678f89;

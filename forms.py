@@ -1,8 +1,12 @@
 """Forms module for the Learning Journal app."""
+import datetime
 from flask_wtf import Form
 from wtforms import (
+    DateField,
+    IntegerField,
+    PasswordField,
     StringField,
-    PasswordField
+    TextAreaField
 )
 from wtforms.validators import (
     DataRequired,
@@ -20,31 +24,47 @@ def name_exists(_, field):
 
 class RegisterForm(Form):
     username = StringField(
-        'Username',
+        "Username",
         validators=[
             DataRequired(),
             Regexp(
-                r'^[a-zA-Z0-9]+$',
+                r"^[a-zA-Z0-9]+$",
                 message="Usernames may only contain letters and numbers."
             ),
             name_exists
         ])
     password = PasswordField(
-        'Password',
+        "Password",
         validators=[
             DataRequired(),
             Length(
                 min=8,
                 message="Password must be at least 8 characters"
             ),
-            EqualTo('confirm_password', message='Passwords must match')
+            EqualTo("confirm_password", message="Passwords must match")
         ])
     confirm_password = PasswordField(
-        'Confirm Password',
+        "Confirm Password",
         validators=[DataRequired()]
     )
 
 
 class LoginForm(Form):
-    username = StringField('Username', validators=[DataRequired(), User()])
-    password = PasswordField('Password', validators=[DataRequired()])
+    username = StringField("Username", validators=[DataRequired()])
+    password = PasswordField("Password", validators=[DataRequired()])
+
+
+class EntryForm(Form):
+    title = StringField("Title", validators=[DataRequired()])
+    date = DateField(
+        "Date",
+        default=datetime.datetime.today,
+        validators=[DataRequired()]
+    )
+    time_spent = IntegerField("Time Spent", validators=[DataRequired()])
+    learned = TextAreaField("What You Learned", validators=[DataRequired()])
+    resources = TextAreaField(
+        "Resources to Remember",
+        validators=[DataRequired()]
+    )
+    tags = StringField("Tags")
