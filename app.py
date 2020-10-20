@@ -72,25 +72,27 @@ def index():
     """Home page.
 
     Displays title, date and link for all public entries.  If a user is logged
-    in, also displays the user's private entries.
+    in, also displays the user's private/hidden entries.
     """
     if current_user.is_authenticated:
         entries = (models.User.select()
                    .where(
+            models.Entry.hidden == False |
             models.Entry.private == False |
             models.User.username == current_user
         )
                    .order_by(models.Entry.date.desc())
                    )
     else:
-        entries = models.Entry.select().where(models.Entry.private == False)
-    return render_template("index.html", entries=entries, user="All")
+        entries = models.Entry.select().where(
+            models.Entry.private == False | models.Entry.hidden == False)
+    return render_template("index.html", entries=entries)
 
 
 @app.route("/entries/<user>")
 @login_required
 def entries():
-    """Displays a user's entries"""
+    """Displays title, date and link for a user's entries."""
     entries = current_user.entries
     return render_template("entries.html", entries=entries)
 
@@ -245,7 +247,8 @@ def delete_entry(entry_id):
     # Delete associated tags before deleting the entry.
     models.EntryTag.delete().where(models.EntryTag.entry == entry)
     entry.delete_instance()
-    return redirect(request.referrer)
+    flash("Entry deleted.", "success")
+    return redirect(url_for("/entries/<current_user.username>"))
 
 
 # EXECUTION BEGINS HERE
