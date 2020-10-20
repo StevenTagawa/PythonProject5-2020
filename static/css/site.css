@@ -89,6 +89,12 @@ footer {
 	padding-left: 30px;
 	top: -10px;
 }
+.button.icon-left-row2 {
+    float: absolute;
+    left: 25px;
+	padding-left: 30px;
+	top: 60px;
+}
 .button.icon-right i {
 	position: absolute;
 	top: 3px;
@@ -100,6 +106,11 @@ footer {
 	right: 3px;
 }
 .button.icon-left i {
+	position: absolute;
+	top: 3px;
+	left: 3px;
+}
+.button.icon-left-row2 i {
 	position: absolute;
 	top: 3px;
 	left: 3px;

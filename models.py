@@ -39,6 +39,7 @@ class Entry(Model):
     learned = TextField()
     resources = TextField()
     private = BooleanField(default=False)
+    hidden = BooleanField(default=False)
 
     class Meta:
         database = DATABASE
@@ -64,6 +65,7 @@ class Tag(Model):
                 .join(EntryTag)
                 .join(Tag)
                 .where(Tag.name ** self.name)
+                .order_by(Entry.date.desc())
                 )
 
 

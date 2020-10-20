@@ -6,6 +6,7 @@ from flask import (
     g,
     redirect,
     render_template,
+    request,
     url_for
 )
 from flask_bcrypt import generate_password_hash
@@ -66,13 +67,32 @@ def after_request(response):
 
 
 @app.route("/")
-def index():
-    return render_template("index.html")
-
-
 @app.route("/entries")
-def show_entries():
-    return render_template("entries.html")
+def index():
+    """Home page.
+
+    Displays title, date and link for all public entries.  If a user is logged
+    in, also displays the user's private entries.
+    """
+    if current_user.is_authenticated:
+        entries = (models.User.select()
+                   .where(
+            models.Entry.private == False |
+            models.User.username == current_user
+        )
+                   .order_by(models.Entry.date.desc())
+                   )
+    else:
+        entries = models.Entry.select().where(models.Entry.private == False)
+    return render_template("index.html", entries=entries, user="All")
+
+
+@app.route("/entries/<user>")
+@login_required
+def entries():
+    """Displays a user's entries"""
+    entries = current_user.entries
+    return render_template("entries.html", entries=entries)
 
 
 @app.route("/register", methods=("GET", "POST"))
@@ -85,6 +105,7 @@ def register():
             password=form.password.data,
             god=False
         )
+        login_user(models.User.get(models.User.username == form.username.data))
         return redirect(url_for("index"))
     return render_template("form.html", button="Register", form=form)
 
@@ -112,30 +133,119 @@ def login():
 def logout():
     logout_user()
     flash("Logout successful.", "success")
-    return redirect(url_for('index'))
+    return redirect(url_for("index"))
 
 
 @app.route("/entries/new")
 @login_required
 def create_entry():
-    pass
+    form = forms.EntryForm()
+    if form.validate_on_submit():
+        entry = models.Entry.create(
+            user=current_user.username,
+            title=form.title.data,
+            date=form.date.data,
+            time_spent=form.time_spent.data,
+            learned=form.learned.data,
+            resources=form.resources.data,
+            private=form.private.data,
+            hidden=form.hidden.data
+        )
+        # Tags need to be added to the Tag and EntryTag tables.  Searches for
+        # tags may be case-insensitive, but actual tags will be stored as-is.
+        tags = form.tags.data.split(",")
+        for tag in tags:
+            tag = tag.strip()
+            try:
+                tag = models.Tag.get(models.Tag.name == tag)
+            except models.DoesNotExist:
+                tag = models.Tag.create(name=tag)
+            models.EntryTag.create(entry=entry, tag=tag)
+        return redirect(url_for("index"))
+    return render_template("new.html")
 
 
-@app.route("/entries/<id>")
-def show_entry():
-    pass
+@app.route("/entries/<int:entry_id>")
+def show_entry(entry_id):
+    try:
+        entry = models.Entry.get(models.Entry.id == entry_id)
+        # Deny that hidden entries exist, except to the author.
+        if (entry.hidden is True and
+                (not current_user.is_authenticated or
+                 current_user.username != entry.user)):
+            raise models.DoesNotExist
+    except models.DoesNotExist:
+        flash("Entry does not exist.", "error")
+        return redirect(url_for("index"))
+    # Private entries are listed, but not shown except to the author.
+    if (entry.private is True and
+            (not current_user.is_authenticated or
+             current_user.username != entry.user)):
+        flash("Entry is private.", "error")
+        return redirect(url_for("index"))
+    return render_template("detail.html", entry=entry)
 
 
-@app.route("/entries/<id>/edit")
+@app.route("/entries/<int:entry_id>/edit")
 @login_required
-def edit_entry():
-    pass
+def edit_entry(entry_id):
+    try:
+        # Entries can only be edited by the author.
+        entry = models.Entry.get(models.Entry.id == entry_id)
+        if current_user.username != entry.user:
+            raise models.DoesNotExist
+    except models.DoesNotExist:
+        flash("Cannot edit entry.", "error")
+        return redirect(url_for("index"))
+    # Get the current tag list to compare to whatever changes the user makes.
+    old_tags = [tag.name for tag in
+                models.EntryTag.select().where(models.EntryTag.entry == entry)]
+    form = forms.EntryForm()
+    if form.validate_on_submit():
+        entry = models.Entry.create(
+            user=current_user.username,
+            title=form.title.data,
+            date=form.date.data,
+            time_spent=form.time_spent.data,
+            learned=form.learned.data,
+            resources=form.resources.data,
+            private=form.private.data,
+            hidden=form.hidden.data
+        )
+        # Update tags (add new tags, delete deleted tags).
+        new_tags = form.tags.data.split(",")
+        for ndx in range(len(new_tags)):  # iterate through (but not over) list.
+            new_tags[ndx] = new_tags[ndx].strip()
+        for tag in old_tags:
+            if tag not in new_tags:
+                tag = models.Tag.get(models.Tag.name == tag)
+                entry_tag = models.EntryTag.get(
+                    models.EntryTag.entry == entry, models.EntryTag.tag == tag)
+                entry_tag.delete_instance()
+        for tag in new_tags:
+            if tag not in old_tags:
+                tag = models.Tag.create(name=tag)
+                models.EntryTag.create(entry=entry, tag=tag)
+        flash("Entry edited.", "success")
+        return redirect(url_for("index"))
+    return render_template("edit.html", entry_id=entry_id)
 
 
-@app.route("/entries/<id>/delete")
+@app.route("/entries/<int:entry_id>/delete")
 @login_required
-def delete_entry():
-    pass
+def delete_entry(entry_id):
+    try:
+        # Entries can only be deleted by the author.
+        entry = models.Entry.get(models.Entry.id == entry_id)
+        if current_user.username != entry.user:
+            raise models.DoesNotExist
+    except models.DoesNotExist:
+        flash("Cannot delete entry.", "error")
+        return redirect(url_for("index"))
+    # Delete associated tags before deleting the entry.
+    models.EntryTag.delete().where(models.EntryTag.entry == entry)
+    entry.delete_instance()
+    return redirect(request.referrer)
 
 
 # EXECUTION BEGINS HERE

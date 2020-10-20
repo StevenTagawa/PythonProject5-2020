@@ -2,6 +2,7 @@
 import datetime
 from flask_wtf import Form
 from wtforms import (
+    BooleanField,
     DateField,
     IntegerField,
     PasswordField,
@@ -68,3 +69,5 @@ class EntryForm(Form):
         validators=[DataRequired()]
     )
     tags = StringField("Tags")
+    private = BooleanField(default=False)
+    hidden = BooleanField(default=False)

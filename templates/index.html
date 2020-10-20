@@ -3,6 +3,8 @@
 {% block header %}
     <div class="container">
         <div class="site-header">
+            <a class="button icon-left" href="index.html"><span>Home</span> <i class="material-icons">home</i></a>
+            <a class="button icon-left-row2" href="help.html"><span>Help</span> <i class="material-icons">help</i></a>
             <span class="title">Learning Journal</span>
             {% if current_user.is_authenticated %}
                 <a class="button icon-right" href="new.html"><span>New Entry</span> <i class="material-icons">add</i></a>
