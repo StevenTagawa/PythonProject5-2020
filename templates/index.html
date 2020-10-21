@@ -1,27 +1,14 @@
-{% extends "layout.html" %}
+<!DOCTYPE html>
 {% from "macros.html" import render_listing %}
 
-{% block header %}
-    <div class="container">
-        <div class="site-header">
-            <a class="button icon-left" href="index.html"><span>Home</span> <i class="material-icons">home</i></a>
-            <a class="button icon-left-row2" href="help.html"><span>Help</span> <i class="material-icons">help</i></a>
-            <span class="title">Learning Journal</span>
-            {% if current_user.is_authenticated %}
-                <a class="button icon-right" href="new.html"><span>New Entry</span> <i class="material-icons">add</i></a>
-                <a class="button icon-right-row2" href="logout.html"><span>Log Out</span> <i class="material-icons">person_outline</i></a>
-            {% else %}
-                <a class="button icon-right" href="register.html"><span>Register</span> <i class="material-icons">person_add</i></a>
-                <a class="button icon-right-row2" href="login.html"><span>Log In</span> <i class="material-icons">person</i></a>
-            {% endif %}
-        </div>
-    </div>
-{% endblock %}
-
-{% block content %}
-    <div class="entry-list">
-        {% for listing in entries %}
-            {{ render_listing(listing) }}
-        {% endfor %}
-    </div>
-{% endblock %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Learning Journal</title>
+</head>
+<body>
+{% for entry in entries %}
+    {{ render_listing(entry) }}
+{% endfor %}
+</body>
+</html>

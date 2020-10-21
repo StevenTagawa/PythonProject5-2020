@@ -259,6 +259,6 @@ def delete_entry(entry_id):
 # EXECUTION BEGINS HERE
 if __name__ == "__main__":
     models.initialize()
-    debug_test.create_user()  # DEBUG - REMOVE BEFORE FINALIZATION
+    debug_test.create_user("crashtestdummy", "password")  # DEBUG
     app.run(debug=DEBUG, host=HOST, port=PORT)
 # EXECUTION ENDS HERE
