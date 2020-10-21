@@ -1,6 +1,16 @@
 {% extends "layout.html" %}
 {% from 'macros.html' import render_field %}
 
+{% block header %}
+    <div class="container">
+        <div class="site-header">
+            <a class="button icon-left" href="index.html"><span>Home</span> <i class="material-icons">home</i></a>
+            <a class="button icon-left-row2" href="help.html"><span>Help</span> <i class="material-icons">help</i></a>
+            <span class="title">Learning Journal</span>
+        </div>
+    </div>
+{% endblock %}
+
 {% block content %}
 <form method="POST" action="" class="form">
     {{ form.hidden_tag() }}

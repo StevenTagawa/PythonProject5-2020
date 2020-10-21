@@ -112,7 +112,7 @@ def register():
     return render_template("form.html", button="Register", form=form)
 
 
-@app.route('/login', methods=('GET', 'POST'))
+@app.route("/login", methods=("GET", "POST"))
 def login():
     form = forms.LoginForm()
     if form.validate_on_submit():
@@ -143,6 +143,9 @@ def logout():
 def create_entry():
     form = forms.EntryForm()
     if form.validate_on_submit():
+        # All entries marked hidden are also private.
+        if form.hidden.data:
+            form.hidden.data = True
         entry = models.Entry.create(
             user=current_user.username,
             title=form.title.data,
@@ -171,20 +174,22 @@ def create_entry():
 def show_entry(entry_id):
     try:
         entry = models.Entry.get(models.Entry.id == entry_id)
-        # Deny that hidden entries exist, except to the author.
-        if (entry.hidden is True and
-                (not current_user.is_authenticated or
-                 current_user.username != entry.user)):
-            raise models.DoesNotExist
+        # Deny that hidden entries exist, except to the author (and god).
+        if not current_user.god:
+            if entry.hidden:
+                if (not current_user.is_authenticated or
+                        current_user.username != entry.user):
+                    raise models.DoesNotExist
     except models.DoesNotExist:
         flash("Entry does not exist.", "error")
         return redirect(url_for("index"))
-    # Private entries are listed, but not shown except to the author.
-    if (entry.private is True and
-            (not current_user.is_authenticated or
-             current_user.username != entry.user)):
-        flash("Entry is private.", "error")
-        return redirect(url_for("index"))
+    # Private entries are listed, but not shown except to the author (and god).
+    if not current_user.god:
+        if entry.private:
+            if (not current_user.is_authenticated or
+                    current_user.username != entry.user):
+                flash("Entry is private.", "error")
+                return redirect(url_for("index"))
     return render_template("detail.html", entry=entry)
 
 
@@ -248,7 +253,7 @@ def delete_entry(entry_id):
     models.EntryTag.delete().where(models.EntryTag.entry == entry)
     entry.delete_instance()
     flash("Entry deleted.", "success")
-    return redirect(url_for("/entries/<current_user.username>"))
+    return redirect(url_for("entries", user=current_user.username))
 
 
 # EXECUTION BEGINS HERE
