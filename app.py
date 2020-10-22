@@ -82,7 +82,7 @@ def index():
             entries = models.Entry.select().order_by(models.Entry.date.desc())
         else:
             entries = (models.Entry.select().where(
-                ((models.Entry.hidden == False) &
+                ((models.Entry.hidden == False) & # noqa
                  (models.Entry.user != current_user.id)
                  ) |
                 (models.Entry.user == current_user.id))
@@ -92,7 +92,7 @@ def index():
             god=current_user.god
         )
     else:
-        entries = models.Entry.select().where(models.Entry.hidden == False)
+        entries = models.Entry.select().where(models.Entry.hidden == False) # noqa
         return render_template(
             "index.html", entries=entries, user="nobody", god=False
         )
