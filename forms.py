@@ -1,6 +1,6 @@
 """Forms module for the Learning Journal app."""
 import datetime
-from flask_wtf import Form
+from flask_wtf import FlaskForm
 from wtforms import (
     BooleanField,
     DateField,
@@ -25,7 +25,7 @@ def name_exists(_, field):
         raise ValidationError("Username already exists.")
 
 
-class RegisterForm(Form):
+class RegisterForm(FlaskForm):
     username = StringField(
         "Username",
         validators=[
@@ -52,12 +52,12 @@ class RegisterForm(Form):
     )
 
 
-class LoginForm(Form):
+class LoginForm(FlaskForm):
     username = StringField("Username", validators=[DataRequired()])
     password = PasswordField("Password", validators=[DataRequired()])
 
 
-class EntryForm(Form):
+class EntryForm(FlaskForm):
     title = StringField("Title", validators=[DataRequired()])
     date = DateField(
         "Date",

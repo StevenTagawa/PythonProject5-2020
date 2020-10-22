@@ -78,14 +78,14 @@ def index():
     """
     if current_user.is_authenticated:
         if current_user.god:
-            entries = models.Entry.select()
+            entries = models.Entry.select().order_by(models.Entry.date.desc())
         else:
             entries = (models.Entry.select()
                        .where(
                 models.Entry.hidden == False |
-                models.Entry.private == False |
-                models.User.username == current_user
-            )
+                models.Entry.private == False)
+                       .join(models.User)
+                       .where(models.User.username == current_user.username)
                        .order_by(models.Entry.date.desc())
                        )
         return render_template(

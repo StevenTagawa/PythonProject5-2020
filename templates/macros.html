@@ -23,6 +23,12 @@
                 </a>
             {% endif %}
         </h2>
+        <p>by:
+        {% if listing.user.username == user %}
+            You
+        {% else %}
+            {{ user }}
+        {% endif %}</p>
         <time datetime="{{ listing.date }}">{{ listing.date }}</time>
     </article>
 {% endmacro %}
