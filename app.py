@@ -73,15 +73,16 @@ def after_request(response):
 def index():
     """Home page.
 
-    Displays title, date and link for all public entries.  If a user is logged
-    in, also displays the user's private/hidden entries.
+    Displays title and date for all non-hidden entries, and link for all public
+    entries.  If a user is logged in, also displays links for the user's private
+    and hidden entries.
     """
     if current_user.is_authenticated:
         if current_user.god:
             entries = models.Entry.select().order_by(models.Entry.date.desc())
         else:
             entries = (models.Entry.select().where(
-                ((models.Entry.private == False) &
+                ((models.Entry.hidden == False) &
                  (models.Entry.user != current_user.id)
                  ) |
                 (models.Entry.user == current_user.id))
@@ -91,8 +92,7 @@ def index():
             god=current_user.god
         )
     else:
-        entries = models.Entry.select().where(
-            models.Entry.private == False | models.Entry.hidden == False)
+        entries = models.Entry.select().where(models.Entry.hidden == False)
         return render_template(
             "index.html", entries=entries, user="nobody", god=False
         )
