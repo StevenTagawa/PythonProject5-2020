@@ -7,19 +7,16 @@ from flask import (
     redirect,
     render_template,
     request,
-    url_for
-)
+    url_for)
 from flask_bcrypt import (
     check_password_hash,
-    generate_password_hash
-)
+    generate_password_hash)
 from flask_login import (
     current_user,
     LoginManager,
     login_required,
     login_user,
-    logout_user
-)
+    logout_user)
 import random
 
 import forms
@@ -89,13 +86,11 @@ def index():
                        .order_by(models.Entry.date.desc()))
         return render_template(
             "index.html", entries=entries, user=current_user.username,
-            god=current_user.god
-        )
+            god=current_user.god)
     else:
         entries = models.Entry.select().where(models.Entry.hidden == False) # noqa
         return render_template(
-            "index.html", entries=entries, user="nobody", god=False
-        )
+            "index.html", entries=entries, user="nobody", god=False)
 
 
 @app.route("/entries")
@@ -106,9 +101,21 @@ def entries():
 
 @app.route("/entries/<user>")
 @login_required
-def user_entries():
-    """Displays title, date and link for a user's entries."""
-    entries = current_user.entries
+def user_entries(user):
+    """Displays a user's entries.
+
+    If a logged-in user is viewing their own entries, displays title, date and
+    links for all entries.  Otherwise, displays title and date for all non-
+    hidden entries, and links for all public entries.
+    """
+    if current_user.is_authenticated and current_user.username == user:
+        entries = current_user.entries.order_by(models.Entry.date.desc())
+    else:
+        entries = (models.Entry.select().where(
+            models.Entry.hidden == False)  # noqa
+            .join(User)
+            .where(User.username == user)
+            .order_by(models.Entry.date.desc()))
     return render_template("entries.html", entries=entries)
 
 
@@ -120,8 +127,7 @@ def register():
         models.User.create_user(
             username=form.username.data,
             password=form.password.data,
-            god=False
-        )
+            god=False)
         login_user(models.User.get(models.User.username == form.username.data))
         return redirect(url_for("index"))
     return render_template("form.html", button="Register", form=form)
@@ -274,6 +280,6 @@ def delete_entry(entry_id):
 # EXECUTION BEGINS HERE
 if __name__ == "__main__":
     models.initialize()
-    debug_test.create_user("crashtestdummy", "password")  # DEBUG
+    debug_test.create_user("prez_skroob", "12345")  # DEBUG
     app.run(debug=DEBUG, host=HOST, port=PORT)
 # EXECUTION ENDS HERE
