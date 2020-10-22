@@ -80,14 +80,12 @@ def index():
         if current_user.god:
             entries = models.Entry.select().order_by(models.Entry.date.desc())
         else:
-            entries = (models.Entry.select()
-                       .where(
-                models.Entry.hidden == False |
-                models.Entry.private == False)
-                       .join(models.User)
-                       .where(models.User.username == current_user.username)
-                       .order_by(models.Entry.date.desc())
-                       )
+            entries = (models.Entry.select().where(
+                ((models.Entry.private == False) &
+                 (models.Entry.user != current_user.id)
+                 ) |
+                (models.Entry.user == current_user.id))
+                       .order_by(models.Entry.date.desc()))
         return render_template(
             "index.html", entries=entries, user=current_user.username,
             god=current_user.god
@@ -96,7 +94,7 @@ def index():
         entries = models.Entry.select().where(
             models.Entry.private == False | models.Entry.hidden == False)
         return render_template(
-            "index.html", entries=entries, user="", god=False
+            "index.html", entries=entries, user="nobody", god=False
         )
 
 

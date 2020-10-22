@@ -10,6 +10,7 @@ DATABASE = SqliteDatabase("journal.db")
 
 
 class User(UserMixin, Model):
+    id = AutoField()
     username = CharField(unique=True)
     password = CharField(max_length=100)
     god = BooleanField(default=False)
