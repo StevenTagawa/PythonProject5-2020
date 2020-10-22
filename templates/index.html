@@ -8,7 +8,7 @@
 </head>
 <body>
 {% for entry in entries %}
-    {{ render_listing(entry) }}
+    {{ render_listing(entry, user, god) }}
 {% endfor %}
 </body>
 </html>

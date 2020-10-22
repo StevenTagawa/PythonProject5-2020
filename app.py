@@ -9,7 +9,10 @@ from flask import (
     request,
     url_for
 )
-from flask_bcrypt import generate_password_hash
+from flask_bcrypt import (
+    check_password_hash,
+    generate_password_hash
+)
 from flask_login import (
     current_user,
     LoginManager,
@@ -67,7 +70,6 @@ def after_request(response):
 
 
 @app.route("/")
-@app.route("/entries")
 def index():
     """Home page.
 
@@ -75,23 +77,38 @@ def index():
     in, also displays the user's private/hidden entries.
     """
     if current_user.is_authenticated:
-        entries = (models.User.select()
-                   .where(
-            models.Entry.hidden == False |
-            models.Entry.private == False |
-            models.User.username == current_user
+        if current_user.god:
+            entries = models.Entry.select()
+        else:
+            entries = (models.Entry.select()
+                       .where(
+                models.Entry.hidden == False |
+                models.Entry.private == False |
+                models.User.username == current_user
+            )
+                       .order_by(models.Entry.date.desc())
+                       )
+        return render_template(
+            "index.html", entries=entries, user=current_user.username,
+            god=current_user.god
         )
-                   .order_by(models.Entry.date.desc())
-                   )
     else:
         entries = models.Entry.select().where(
             models.Entry.private == False | models.Entry.hidden == False)
-    return render_template("index.html", entries=entries)
+        return render_template(
+            "index.html", entries=entries, user="", god=False
+        )
+
+
+@app.route("/entries")
+def entries():
+    """Prevents url_for from returning "/entries" for "index"."""
+    index()
 
 
 @app.route("/entries/<user>")
 @login_required
-def entries():
+def user_entries():
     """Displays title, date and link for a user's entries."""
     entries = current_user.entries
     return render_template("entries.html", entries=entries)
@@ -145,7 +162,7 @@ def create_entry():
     if form.validate_on_submit():
         # All entries marked hidden are also private.
         if form.hidden.data:
-            form.hidden.data = True
+            form.private.data = True
         entry = models.Entry.create(
             user=current_user.username,
             title=form.title.data,

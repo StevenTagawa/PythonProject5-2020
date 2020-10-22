@@ -27,7 +27,8 @@ class User(UserMixin, Model):
                     god=god
                 )
         except IntegrityError:
-            raise ValueError("User already exists.")
+            # raise ValueError("User already exists.")
+            pass
 
 
 class Entry(Model):

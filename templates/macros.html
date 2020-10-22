@@ -12,14 +12,14 @@
 {% macro render_article(article) %}
 {% endmacro %}
 
-{% macro render_listing(listing) %}
+{% macro render_listing(listing, user, god) %}
     <article class="listing">
         <h2>
-            {% if listing.private == False %}
+            {% if listing.private == False or listing.user.username == user or god %}
                 <a href="/entries/{{ listing.id }}">
             {% endif %}
                 {{ listing.title }}
-            {% if listing.private == False %}
+            {% if listing.private == False or listing.user.username == user or god %}
                 </a>
             {% endif %}
         </h2>
