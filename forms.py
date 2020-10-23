@@ -7,15 +7,13 @@ from wtforms import (
     IntegerField,
     PasswordField,
     StringField,
-    TextAreaField
-)
+    TextAreaField)
 from wtforms.validators import (
     DataRequired,
     EqualTo,
     Length,
     Regexp,
-    ValidationError
-)
+    ValidationError)
 
 from models import User
 
@@ -32,24 +30,19 @@ class RegisterForm(FlaskForm):
             DataRequired(),
             Regexp(
                 r"^[a-zA-Z0-9]+$",
-                message="Usernames may only contain letters and numbers."
-            ),
-            name_exists
-        ])
+                message="Usernames may only contain letters and numbers."),
+            name_exists])
     password = PasswordField(
         "Password",
         validators=[
             DataRequired(),
             Length(
                 min=8,
-                message="Password must be at least 8 characters"
-            ),
-            EqualTo("confirm_password", message="Passwords must match")
-        ])
+                message="Password must be at least 8 characters"),
+            EqualTo("confirm_password", message="Passwords must match")])
     confirm_password = PasswordField(
         "Confirm Password",
-        validators=[DataRequired()]
-    )
+        validators=[DataRequired()])
 
 
 class LoginForm(FlaskForm):
@@ -62,14 +55,10 @@ class EntryForm(FlaskForm):
     date = DateField(
         "Date",
         default=datetime.datetime.today,
-        validators=[DataRequired()]
-    )
+        validators=[DataRequired()])
     time_spent = IntegerField("Time Spent", validators=[DataRequired()])
     learned = TextAreaField("What You Learned", validators=[DataRequired()])
-    resources = TextAreaField(
-        "Resources to Remember",
-        validators=[DataRequired()]
-    )
+    resources = TextAreaField("Resources to Remember")
     tags = StringField("Tags")
     private = BooleanField(default=False)
     hidden = BooleanField(default=False)

@@ -79,7 +79,7 @@ def index():
             entries = models.Entry.select().order_by(models.Entry.date.desc())
         else:
             entries = (models.Entry.select().where(
-                ((models.Entry.hidden == False) & # noqa
+                ((models.Entry.hidden == False) &  # noqa
                  (models.Entry.user != current_user.id)
                  ) |
                 (models.Entry.user == current_user.id))
@@ -88,7 +88,8 @@ def index():
             "index.html", entries=entries, user=current_user.username,
             god=current_user.god)
     else:
-        entries = models.Entry.select().where(models.Entry.hidden == False) # noqa
+        entries = models.Entry.select().where(
+            models.Entry.hidden == False)  # noqa
         return render_template(
             "index.html", entries=entries, user="nobody", god=False)
 
@@ -113,9 +114,9 @@ def user_entries(user):
     else:
         entries = (models.Entry.select().where(
             models.Entry.hidden == False)  # noqa
-            .join(User)
-            .where(User.username == user)
-            .order_by(models.Entry.date.desc()))
+                   .join(User)
+                   .where(User.username == user)
+                   .order_by(models.Entry.date.desc()))
     return render_template("entries.html", entries=entries)
 
 
@@ -159,7 +160,7 @@ def logout():
     return redirect(url_for("index"))
 
 
-@app.route("/entries/new")
+@app.route("/entries/new", methods=("GET", "POST"))
 @login_required
 def create_entry():
     form = forms.EntryForm()
@@ -168,53 +169,50 @@ def create_entry():
         if form.hidden.data:
             form.private.data = True
         entry = models.Entry.create(
-            user=current_user.username,
+            user=g.user._get_current_object(),  # noqa
             title=form.title.data,
             date=form.date.data,
             time_spent=form.time_spent.data,
             learned=form.learned.data,
             resources=form.resources.data,
             private=form.private.data,
-            hidden=form.hidden.data
-        )
+            hidden=form.hidden.data)
         # Tags need to be added to the Tag and EntryTag tables.  Searches for
         # tags may be case-insensitive, but actual tags will be stored as-is.
-        tags = form.tags.data.split(",")
-        for tag in tags:
-            tag = tag.strip()
-            try:
-                tag = models.Tag.get(models.Tag.name == tag)
-            except models.DoesNotExist:
-                tag = models.Tag.create(name=tag)
-            models.EntryTag.create(entry=entry, tag=tag)
+        if form.tags.data:
+            tags = form.tags.data.split(",")
+            for tag in tags:
+                tag = tag.strip()
+                try:
+                    tag = models.Tag.get(models.Tag.name == tag)
+                except models.DoesNotExist:
+                    tag = models.Tag.create(name=tag)
+                models.EntryTag.create(entry=entry, tag=tag)
+        flash("Entry saved.", "success")
         return redirect(url_for("index"))
-    return render_template("new.html")
+    return render_template("form.html", button="Save", form=form)
 
 
-@app.route("/entries/<int:entry_id>")
+@app.route("/entries/<int:entry_id>", methods=("GET", "POST"))
 def show_entry(entry_id):
     try:
         entry = models.Entry.get(models.Entry.id == entry_id)
         # Deny that hidden entries exist, except to the author (and god).
-        if not current_user.god:
+        if (not current_user.god and
+                (not current_user.is_authenticated or
+                 current_user.id != entry.user)):
             if entry.hidden:
-                if (not current_user.is_authenticated or
-                        current_user.username != entry.user):
-                    raise models.DoesNotExist
-    except models.DoesNotExist:
-        flash("Entry does not exist.", "error")
-        return redirect(url_for("index"))
-    # Private entries are listed, but not shown except to the author (and god).
-    if not current_user.god:
-        if entry.private:
-            if (not current_user.is_authenticated or
-                    current_user.username != entry.user):
+                flash("Entry does not exist.", "error")
+                raise models.DoesNotExist
+            elif entry.private:
                 flash("Entry is private.", "error")
-                return redirect(url_for("index"))
+                raise models.DoesNotExist
+    except models.DoesNotExist:
+        return redirect(url_for("index"))
     return render_template("detail.html", entry=entry)
 
 
-@app.route("/entries/<int:entry_id>/edit")
+@app.route("/entries/<int:entry_id>/edit", methods=("GET", "POST"))
 @login_required
 def edit_entry(entry_id):
     try:
@@ -231,15 +229,14 @@ def edit_entry(entry_id):
     form = forms.EntryForm()
     if form.validate_on_submit():
         entry = models.Entry.create(
-            user=current_user.username,
+            user=g.user._get_current_object(),  # noqa
             title=form.title.data,
             date=form.date.data,
             time_spent=form.time_spent.data,
             learned=form.learned.data,
             resources=form.resources.data,
             private=form.private.data,
-            hidden=form.hidden.data
-        )
+            hidden=form.hidden.data)
         # Update tags (add new tags, delete deleted tags).
         new_tags = form.tags.data.split(",")
         for ndx in range(len(new_tags)):  # iterate through (but not over) list.
@@ -259,7 +256,7 @@ def edit_entry(entry_id):
     return render_template("edit.html", entry_id=entry_id)
 
 
-@app.route("/entries/<int:entry_id>/delete")
+@app.route("/entries/<int:entry_id>/delete", methods=("GET", "POST"))
 @login_required
 def delete_entry(entry_id):
     try:
@@ -280,6 +277,7 @@ def delete_entry(entry_id):
 # EXECUTION BEGINS HERE
 if __name__ == "__main__":
     models.initialize()
+    debug_test.create_god()  # DEBUG
     debug_test.create_user("prez_skroob", "12345")  # DEBUG
     app.run(debug=DEBUG, host=HOST, port=PORT)
 # EXECUTION ENDS HERE
