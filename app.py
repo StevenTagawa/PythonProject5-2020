@@ -175,6 +175,7 @@ def create_entry():
             time_spent=form.time_spent.data,
             learned=form.learned.data,
             resources=form.resources.data,
+            tags=form.tags.data,
             private=form.private.data,
             hidden=form.hidden.data)
         # Tags need to be added to the Tag and EntryTag tables.  Searches for
@@ -190,7 +191,7 @@ def create_entry():
                 models.EntryTag.create(entry=entry, tag=tag)
         flash("Entry saved.", "success")
         return redirect(url_for("index"))
-    return render_template("form.html", button="Save", form=form)
+    return render_template("form.html", button="Create", form=form)
 
 
 @app.route("/entries/<int:entry_id>", methods=("GET", "POST"))
@@ -218,7 +219,7 @@ def edit_entry(entry_id):
     try:
         # Entries can only be edited by the author.
         entry = models.Entry.get(models.Entry.id == entry_id)
-        if current_user.username != entry.user:
+        if g.user._get_current_object() != entry.user:  # noqa
             raise models.DoesNotExist
     except models.DoesNotExist:
         flash("Cannot edit entry.", "error")
@@ -227,16 +228,27 @@ def edit_entry(entry_id):
     old_tags = [tag.name for tag in
                 models.EntryTag.select().where(models.EntryTag.entry == entry)]
     form = forms.EntryForm()
+    form.title.data = entry.title
+    form.date.data = entry.date
+    form.time_spent.data = entry.time_spent
+    form.learned.data = entry.learned
+    form.resources.data = entry.resources
+    form.private.data = entry.private
+    form.hidden.data = entry.hidden
     if form.validate_on_submit():
-        entry = models.Entry.create(
-            user=g.user._get_current_object(),  # noqa
-            title=form.title.data,
-            date=form.date.data,
-            time_spent=form.time_spent.data,
-            learned=form.learned.data,
-            resources=form.resources.data,
-            private=form.private.data,
-            hidden=form.hidden.data)
+        entry.title = form.title.data
+        entry.date = form.date.data
+        entry.time_spent = form.time_spent.data
+        entry.learned = form.learned.data
+        entry.resources = form.resources.data
+        entry.private = form.private.data
+        entry.hidden = form.hidden.data
+        # All entries that are hidden are also private.
+        #
+        # (Yes, I could use two radio buttons to implement this.  I'm not.)
+        if form.hidden.data:
+            entry.private = True
+        entry.save()
         # Update tags (add new tags, delete deleted tags).
         new_tags = form.tags.data.split(",")
         for ndx in range(len(new_tags)):  # iterate through (but not over) list.
@@ -248,12 +260,12 @@ def edit_entry(entry_id):
                     models.EntryTag.entry == entry, models.EntryTag.tag == tag)
                 entry_tag.delete_instance()
         for tag in new_tags:
-            if tag not in old_tags:
+            if (tag != "") and (tag not in old_tags):
                 tag = models.Tag.create(name=tag)
                 models.EntryTag.create(entry=entry, tag=tag)
         flash("Entry edited.", "success")
         return redirect(url_for("index"))
-    return render_template("edit.html", entry_id=entry_id)
+    return render_template("form.html", button="Update", form=form)
 
 
 @app.route("/entries/<int:entry_id>/delete", methods=("GET", "POST"))

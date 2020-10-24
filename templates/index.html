@@ -1,14 +1,8 @@
-<!DOCTYPE html>
+{% extends "layout.html" %}
 {% from "macros.html" import render_listing %}
 
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Learning Journal</title>
-</head>
-<body>
-{% for entry in entries %}
-    {{ render_listing(entry, user, god) }}
-{% endfor %}
-</body>
-</html>
+{% block content %}
+    {% for entry in entries %}
+        {{ render_listing(entry, user, god) }}
+    {% endfor %}
+{% endblock %}

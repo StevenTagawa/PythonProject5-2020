@@ -40,6 +40,7 @@ class Entry(Model):
     time_spent = TimeField()
     learned = TextField()
     resources = TextField()
+    tags = CharField(max_length=1000)
     private = BooleanField(default=False)
     hidden = BooleanField(default=False)
 

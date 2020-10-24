@@ -1,14 +1,3 @@
-{% macro render_field(field) %}
-    <div class="field-{{ field.id }}">
-        {% if field.errors %}
-            {% for error in field.errors %}
-                <div class="notification error">{{ error }}</div>
-            {% endfor %}
-        {% endif %}
-        {{ field(placeholder=field.label.text) }}
-    </div>
-{% endmacro %}
-
 {% macro render_article(article) %}
 {% endmacro %}
 
@@ -25,7 +14,7 @@
         </h2>
         <p>by:
         {% if listing.user.username == user %}
-            You
+            you
         {% else %}
             {{ listing.user.username }}
         {% endif %}</p>
