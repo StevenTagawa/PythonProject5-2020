@@ -224,23 +224,30 @@ def edit_entry(entry_id):
     except models.DoesNotExist:
         flash("Cannot edit entry.", "error")
         return redirect(url_for("index"))
-    # Get the current tag list to compare to whatever changes the user makes.
-    old_tags = [tag.name for tag in
-                models.EntryTag.select().where(models.EntryTag.entry == entry)]
     form = forms.EntryForm()
-    form.title.data = entry.title
-    form.date.data = entry.date
-    form.time_spent.data = entry.time_spent
-    form.learned.data = entry.learned
-    form.resources.data = entry.resources
-    form.private.data = entry.private
-    form.hidden.data = entry.hidden
+    old_tags = []
+    if request.method == "GET":
+        # Get the current tag list to compare to any changes the user makes.
+        old_tags = [tag.name for tag in entry.get_tags()]
+        form.title.data = entry.title
+        form.date.data = entry.date
+        form.time_spent.data = entry.time_spent
+        form.learned.data = entry.learned
+        print("Before edit, form.learned.data = ", form.learned.data)
+        print("Before edit, entry.learned = ", entry.learned)
+        form.resources.data = entry.resources
+        form.tags.data = entry.tags
+        form.private.data = entry.private
+        form.hidden.data = entry.hidden
     if form.validate_on_submit():
         entry.title = form.title.data
         entry.date = form.date.data
         entry.time_spent = form.time_spent.data
+        print("After edit, form.learned.data = ", form.learned.data)
+        print("After edit, entry.learned = ", entry.learned)
         entry.learned = form.learned.data
         entry.resources = form.resources.data
+        entry.tags = form.tags.data
         entry.private = form.private.data
         entry.hidden = form.hidden.data
         # All entries that are hidden are also private.
@@ -291,5 +298,6 @@ if __name__ == "__main__":
     models.initialize()
     debug_test.create_god()  # DEBUG
     debug_test.create_user("prez_skroob", "12345")  # DEBUG
+    debug_test.create_user("crashtestdummy", "password")  # DEBUG
     app.run(debug=DEBUG, host=HOST, port=PORT)
 # EXECUTION ENDS HERE

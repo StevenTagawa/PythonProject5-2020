@@ -40,14 +40,14 @@ class Entry(Model):
     time_spent = TimeField()
     learned = TextField()
     resources = TextField()
-    tags = CharField(max_length=1000)
+    tags = CharField(max_length=256)
     private = BooleanField(default=False)
     hidden = BooleanField(default=False)
 
     class Meta:
         database = DATABASE
 
-    def tags(self):
+    def get_tags(self):
         return (Tag
                 .select()
                 .join(EntryTag)
