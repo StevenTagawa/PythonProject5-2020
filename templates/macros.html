@@ -1,23 +1,25 @@
 {% macro render_article(article) %}
 {% endmacro %}
 
-{% macro render_listing(listing, user, god) %}
+{% macro render_listing(listing, user, god, by) %}
     <article class="listing">
         <h2>
-            {% if listing.private == False or listing.user.username == user or god %}
+            {% if (listing.private == False) or (listing.user.username == user) or (god == True) %}
                 <a href="/entries/{{ listing.id }}">
             {% endif %}
                 {{ listing.title }}
-            {% if listing.private == False or listing.user.username == user or god %}
+            {% if (listing.private == False) or (listing.user.username == user) or (god == True) %}
                 </a>
             {% endif %}
         </h2>
-        <p>by:
-        {% if listing.user.username == user %}
-            you
-        {% else %}
-            {{ listing.user.username }}
-        {% endif %}</p>
+        {% if by == "All" %}
+            <p>by:
+            {% if listing.user.username == user %}
+                you
+            {% else %}
+                {{ listing.user.username }}
+            {% endif %}</p>
+        {% endif %}
         <time datetime="{{ listing.date }}">{{ listing.date }}</time>
     </article>
 {% endmacro %}

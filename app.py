@@ -22,8 +22,6 @@ import random
 import forms
 import models
 
-import debug_test  # DEBUGGING MODULE - REMOVE BEFORE FINALIZATION
-
 DEBUG = True
 PORT = 8000
 HOST = '127.0.0.1'
@@ -67,7 +65,7 @@ def after_request(response):
 
 
 @app.route("/")
-def index():
+def index(home=True):
     """Home page.
 
     Displays title and date for all non-hidden entries, and link for all public
@@ -76,7 +74,7 @@ def index():
     """
     if current_user.is_authenticated:
         if current_user.god:
-            entries = models.Entry.select().order_by(models.Entry.date.desc())
+            entries = models.Entry.select().order_by(models.Entry.date.asc())
         else:
             entries = (models.Entry.select().where(
                 ((models.Entry.hidden == False) &  # noqa
@@ -85,19 +83,19 @@ def index():
                 (models.Entry.user == current_user.id))
                        .order_by(models.Entry.date.desc()))
         return render_template(
-            "index.html", entries=entries, user=current_user.username,
-            god=current_user.god)
+            "listing.html", entries=entries, user=current_user.username,
+            god=current_user.god, home=home, by="All")
     else:
         entries = models.Entry.select().where(
-            models.Entry.hidden == False)  # noqa
-        return render_template(
-            "index.html", entries=entries, user="nobody", god=False)
+            models.Entry.hidden == False).order_by(models.Entry.date.asc())  # noqa
+        return render_template("listing.html", entries=entries, user="",
+                               god=False, home=home, by="All")
 
 
 @app.route("/entries")
 def entries():
     """Prevents url_for from returning "/entries" for "index"."""
-    index()
+    index(home=False)
 
 
 @app.route("/entries/<user>")
@@ -110,14 +108,15 @@ def user_entries(user):
     hidden entries, and links for all public entries.
     """
     if current_user.is_authenticated and current_user.username == user:
-        entries = current_user.entries.order_by(models.Entry.date.desc())
+        entries = current_user.entries.order_by(models.Entry.date.asc())
     else:
         entries = (models.Entry.select().where(
             models.Entry.hidden == False)  # noqa
                    .join(User)
                    .where(User.username == user)
-                   .order_by(models.Entry.date.desc()))
-    return render_template("entries.html", entries=entries)
+                   .order_by(models.Entry.date.asc()))
+    return render_template("listing.html", entries=entries, user="", god=False,
+                           home=False, by="You")
 
 
 @app.route("/register", methods=("GET", "POST"))
@@ -146,7 +145,9 @@ def login():
             if check_password_hash(user.password, form.password.data):
                 login_user(user)
                 flash("Login successful.", "success")
-                return redirect(url_for("index"))
+                return redirect(
+                    url_for("user_entries",
+                            user=g.user._get_current_object().username))  # noqa
             else:
                 flash("Incorrect username or password.", "error")
     return render_template("form.html", button="Log In", form=form)
@@ -168,7 +169,7 @@ def create_entry():
         # All entries marked hidden are also private.
         if form.hidden.data:
             form.private.data = True
-        entry = models.Entry.create(
+        models.Entry.create(
             user=g.user._get_current_object(),  # noqa
             title=form.title.data,
             date=form.date.data,
@@ -281,7 +282,7 @@ def delete_entry(entry_id):
     try:
         # Entries can only be deleted by the author.
         entry = models.Entry.get(models.Entry.id == entry_id)
-        if current_user.username != entry.user:
+        if g.user._get_current_object() != entry.user:  # noqa
             raise models.DoesNotExist
     except models.DoesNotExist:
         flash("Cannot delete entry.", "error")
@@ -290,14 +291,12 @@ def delete_entry(entry_id):
     models.EntryTag.delete().where(models.EntryTag.entry == entry)
     entry.delete_instance()
     flash("Entry deleted.", "success")
-    return redirect(url_for("entries", user=current_user.username))
+    return redirect(url_for(
+        "user_entries", user=g.user._get_current_object().username))  # noqa
 
 
 # EXECUTION BEGINS HERE
 if __name__ == "__main__":
     models.initialize()
-    debug_test.create_god()  # DEBUG
-    debug_test.create_user("prez_skroob", "12345")  # DEBUG
-    debug_test.create_user("crashtestdummy", "password")  # DEBUG
     app.run(debug=DEBUG, host=HOST, port=PORT)
 # EXECUTION ENDS HERE

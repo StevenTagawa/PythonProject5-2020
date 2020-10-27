@@ -2,7 +2,9 @@
 {% from "macros.html" import render_listing %}
 
 {% block content %}
+    <h2>Posts by {{ by }}</h2>
+    <hr>
     {% for entry in entries %}
-        {{ render_listing(entry, user, god) }}
+        {{ render_listing(entry, user, god, by) }}
     {% endfor %}
 {% endblock %}

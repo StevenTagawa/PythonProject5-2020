@@ -1,5 +1,6 @@
 """Forms module for the Learning Journal app."""
 import datetime
+import time
 from flask_wtf import FlaskForm
 from wtforms import (
     BooleanField,
@@ -11,6 +12,7 @@ from wtforms import (
 from wtforms.validators import (
     DataRequired,
     EqualTo,
+    InputRequired,
     Length,
     Regexp,
     ValidationError)
@@ -27,7 +29,7 @@ class RegisterForm(FlaskForm):
     username = StringField(
         "Username",
         validators=[
-            DataRequired(),
+            InputRequired(),
             Regexp(
                 r"^[a-zA-Z0-9]+$",
                 message="Usernames may only contain letters and numbers."),
@@ -35,30 +37,51 @@ class RegisterForm(FlaskForm):
     password = PasswordField(
         "Password",
         validators=[
-            DataRequired(),
+            InputRequired(),
             Length(
                 min=8,
                 message="Password must be at least 8 characters"),
             EqualTo("confirm_password", message="Passwords must match")])
     confirm_password = PasswordField(
         "Confirm Password",
-        validators=[DataRequired()])
+        validators=[InputRequired()])
 
 
 class LoginForm(FlaskForm):
-    username = StringField("Username", validators=[DataRequired()])
-    password = PasswordField("Password", validators=[DataRequired()])
+    username = StringField("Username", validators=[InputRequired()])
+    password = PasswordField("Password", validators=[InputRequired()])
 
 
 class EntryForm(FlaskForm):
-    title = StringField("Title", validators=[DataRequired()])
+    title = StringField("Title", validators=[InputRequired()])
     date = DateField(
         "Date",
         default=datetime.datetime.today,
         validators=[DataRequired()])
-    time_spent = IntegerField("Time Spent", validators=[DataRequired()])
-    learned = TextAreaField("What You Learned", validators=[DataRequired()])
+    time_spent = IntegerField(
+        "Time Spent",
+        validators=[DataRequired()])
+    learned = TextAreaField("What You Learned", validators=[InputRequired()])
     resources = TextAreaField("Resources to Remember")
-    tags = StringField("Tags")
-    private = BooleanField(default=False)
-    hidden = BooleanField(default=False)
+    tags = StringField("Tags",
+                       description="Please enter tags separated by commas.")
+    private = BooleanField("Private", default=False,
+                           description="Private entries cannot be read by "
+                                       "anyone but you.")
+    hidden = BooleanField("Hidden", default=False,
+                          description="Hidden entries will not appear to "
+                                      "anyone but you.")
+
+    def validate_date(form, field):  # noqa
+        try:
+            _ = datetime.datetime.strptime(field.data, "%Y-%m-%d")
+        except ValueError:
+            raise ValidationError(
+                "Please enter a date in the format yyyy-mm-dd.")
+
+    def validate_time_spent(form, field):  # noqa
+        try:
+            _ = time.strptime(field.data, "%H:%M")
+        except ValueError:
+            raise ValidationError(
+                "Please enter a time spent in the format hh:mm.")
