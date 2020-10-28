@@ -33,6 +33,7 @@ HOST = '127.0.0.1'
 last_route = None
 cur_user = None
 cur_entry = None
+cur_tag = None
 """Global variables are reset by each route, and track both the route and the
     variable elements of the URL for the route.  These are used by the url_for
     method in the get_last_route function to build a URL to which the user is
@@ -89,12 +90,13 @@ def index(home=True):
     last_route = "index"
     cur_user = None
     cur_entry = None
+    cur_tag = None
     if current_user.is_authenticated:
         if current_user.god:
             entries = models.Entry.select().order_by(models.Entry.date.asc())
         else:
             entries = (models.Entry.select().where(
-                ((models.Entry.hidden == False) &  # noqa
+                ((models.Entry.hidden == False) &  # noqa (must use == )
                  (models.Entry.user != current_user.id)
                  ) |
                 (models.Entry.user == current_user.id))
@@ -112,11 +114,12 @@ def index(home=True):
 
 @app.route("/entries")
 def entries():
-    """Prevents url_for from returning "/entries" for "index"."""
+    """Prevents url_for from constructing "/entries" for "index"."""
     global last_route, cur_user, cur_entry
     last_route = "entries"
     cur_user = None
     cur_entry = None
+    cur_tag = None
     index(home=False)
 
 
@@ -124,14 +127,15 @@ def entries():
 def user_entries(user):
     """Displays a user's entries.
 
-    If a logged-in user is viewing their own entries, displays title, date and
-    links for all entries.  Otherwise, displays title and date for all non-
-    hidden entries, and links for all public entries.
+        If a logged-in user is viewing their own entries, displays title, date
+        and links for all entries.  Otherwise, displays title and date for all
+        non-hidden entries, and links for all public entries.
     """
     global last_route, cur_user, cur_entry
     last_route = "user_entries"
     cur_user = user
     cur_entry = None
+    cur_tag = None
     if not current_user.is_authenticated:
         return redirect(url_for("login"))
     if current_user.username == user:
@@ -205,6 +209,7 @@ def create_entry():
     last_route = "create_entry"
     cur_user = None
     cur_entry = None
+    cur_tag = None
     if not current_user.is_authenticated:
         return redirect(url_for("login"))
     user = g.user._get_current_object()  # noqa (accessing private method)
@@ -246,6 +251,7 @@ def show_entry(entry_id):
     last_route = "show_entry"
     cur_user = None
     cur_entry = entry_id
+    cur_tag = None
     try:
         entry = models.Entry.get(models.Entry.id == entry_id)
         # Deny that hidden entries exist, except to the author (and god).
@@ -259,7 +265,12 @@ def show_entry(entry_id):
                 raise models.DoesNotExist
     except models.DoesNotExist:
         return redirect(url_for("index"))
-    return render_template("detail.html", entry=entry)
+    # The template needs the entry's tags in list form.
+    tags = [tag.strip() for tag in entry.tags.split(",")]
+    # If there are no tags, send an empty list rather than an empty string.
+    if tags == [""]:
+        tags = []
+    return render_template("detail.html", entry=entry, tags=tags)
 
 
 @app.route("/entries/<int:entry_id>/edit", methods=("GET", "POST"))
@@ -269,6 +280,7 @@ def edit_entry(entry_id):
     last_route = "edit_entry"
     cur_user = None
     cur_entry = entry_id
+    cur_tag = None
     if not current_user.is_authenticated:
         return redirect(url_for("login"))
     try:
@@ -333,6 +345,7 @@ def delete_entry(entry_id):
     last_route = "delete_entry"
     cur_user = None
     cur_entry = None
+    cur_tag = None
     if not current_user.is_authenticated:
         return redirect(url_for("login"))
     user = g.user._get_current_object()  # noqa (accessing private method)
@@ -351,6 +364,46 @@ def delete_entry(entry_id):
     return redirect(url_for("user_entries", user=user.username))
 
 
+@app.route("/tags/<tag>")
+def show_tag(tag):
+    """Shows all non-hidden entries which contain the specified tag.
+
+        Shows hidden entries only to the author (or to god).
+    """
+    global last_route, cur_user, cur_entry
+    last_route = "show_tag"
+    cur_user = None
+    cur_entry = None
+    cur_tag = tag
+    # Make sure some variation of the tag exists. Doesn't matter which one is
+    # used as the search pattern.
+    try:
+        search_tag = models.Tag.select().where(models.Tag.name ** tag).get()
+    except models.DoesNotExist:
+        flash(f"Tag {tag} not found.", "error")
+        return redirect(get_last_route())
+    entries = search_tag.entries()
+    # Users who are not logged in do not see any hidden entries.
+    if not current_user.is_authenticated:
+        # Iterate over (but not through) the list of entries backwards.  (This
+        # allows items to be deleted from the list safely.)
+        for ndx in list(range(len(entries)))[::-1]:
+            if entries[ndx].hidden:
+                del entries[ndx]
+    # Non-god users see only their own hidden entries.
+    elif not current_user.god:
+        for ndx in list(range(len(entries)))[::-1]:
+            if entries[ndx].hidden and entries[ndx].user != current_user.id:
+                del entries[ndx]
+    # If all matching records got filtered out, do not reveal that there were
+    # matching hidden records.
+    if len(entries) == 0:
+        flash(f"Tag {tag} not found.", "error")
+        return redirect(request.referrer)
+    return render_template("tag_listing.html", entries=entries, user="",
+                           god=False, home=False, by="All", tag=tag)
+
+
 def get_last_route():
     """Returns data for the url_for method based on the last route processed.
 
@@ -360,6 +413,8 @@ def get_last_route():
         return url_for(last_route, user=cur_user)
     elif last_route in ["show_entry", "edit_entry", "delete_entry"]:
         return url_for(last_route, entry_id=cur_entry)
+    elif last_route in ["show_tag"]:
+        return url_for(last_route, tag=cur_tag)
     else:
         return url_for(last_route)
 

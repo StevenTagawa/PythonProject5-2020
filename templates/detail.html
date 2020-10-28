@@ -6,7 +6,11 @@
     <div class="entry-time-spent">Time spent:  {{ entry.time_spent }}</div>
     <div class="entry-learned">What I learned:  {{ entry.learned }}</div>
     <div class="entry-resources">Resources:  {{ entry.resources }}</div>
-    <div class="entry-tags">Tags:  {{ entry.tags }}</div>
+    <div class="entry-tags">
+        {% for tag in tags %}
+            <a href="{{ url_for('show_tag', tag=tag) }}">{{ tag }}</a><br>
+        {% endfor %}
+    </div>
     {% if entry.hidden == True %}
         <div class="entry-privacy">This entry is hidden.</div>
     {% elif entry.private == True %}

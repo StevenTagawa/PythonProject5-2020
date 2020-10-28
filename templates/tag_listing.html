@@ -1,0 +1,10 @@
+{% extends "layout.html" %}
+{% from "macros.html" import render_listing %}
+
+{% block content %}
+    <h2>Entries tagged “{{ tag }}”</h2>
+    <hr>
+    {% for entry in entries %}
+        {{ render_listing(entry, user, god, by) }}
+    {% endfor %}
+{% endblock %}
