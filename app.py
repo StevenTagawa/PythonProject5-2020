@@ -33,7 +33,7 @@ HOST = '127.0.0.1'
 last_route = None
 cur_user = None
 cur_entry = None
-"""Global variables are set by each route, and track both the route and the
+"""Global variables are reset by each route, and track both the route and the
     variable elements of the URL for the route.  These are used by the url_for
     method in the get_last_route function to build a URL to which the user is
     redirected after registering or logging in.  
@@ -121,7 +121,6 @@ def entries():
 
 
 @app.route("/entries/<user>")
-@login_required
 def user_entries(user):
     """Displays a user's entries.
 
@@ -133,7 +132,9 @@ def user_entries(user):
     last_route = "user_entries"
     cur_user = user
     cur_entry = None
-    if current_user.is_authenticated and current_user.username == user:
+    if not current_user.is_authenticated:
+        return redirect(url_for("login"))
+    if current_user.username == user:
         entries = current_user.entries.order_by(models.Entry.date.asc())
     else:
         entries = (models.Entry.select().where(
@@ -188,21 +189,24 @@ def login():
 
 
 @app.route("/logout")
-@login_required
 def logout():
+    if not current_user.is_authenticated:
+        flash("You cannot log out; you are not logged in.", "error")
+        return redirect(get_last_route())
     logout_user()
     flash("Logout successful.", "success")
     return redirect(url_for("index"))
 
 
 @app.route("/entries/new", methods=("GET", "POST"))
-@login_required
 def create_entry():
     """Creates a new entry."""
     global last_route, cur_user, cur_entry
     last_route = "create_entry"
     cur_user = None
     cur_entry = None
+    if not current_user.is_authenticated:
+        return redirect(url_for("login"))
     user = g.user._get_current_object()  # noqa (accessing private method)
     form = forms.EntryForm()
     if form.validate_on_submit():
@@ -245,9 +249,8 @@ def show_entry(entry_id):
     try:
         entry = models.Entry.get(models.Entry.id == entry_id)
         # Deny that hidden entries exist, except to the author (and god).
-        if (not current_user.god and
-                (not current_user.is_authenticated or
-                 current_user.id != entry.user)):
+        if (not current_user.is_authenticated or
+                (not current_user.god and current_user.id != entry.user)):
             if entry.hidden:
                 flash("Entry does not exist.", "error")
                 raise models.DoesNotExist
@@ -260,13 +263,14 @@ def show_entry(entry_id):
 
 
 @app.route("/entries/<int:entry_id>/edit", methods=("GET", "POST"))
-@login_required
 def edit_entry(entry_id):
     """Allows the user to edit an entry, if they are authorized to do so."""
     global last_route, cur_user, cur_entry
     last_route = "edit_entry"
     cur_user = None
     cur_entry = entry_id
+    if not current_user.is_authenticated:
+        return redirect(url_for("login"))
     try:
         # Entries can only be edited by the author.
         entry = models.Entry.get(models.Entry.id == entry_id)
@@ -323,13 +327,14 @@ def edit_entry(entry_id):
 
 
 @app.route("/entries/<int:entry_id>/delete", methods=("GET", "POST"))
-@login_required
 def delete_entry(entry_id):
     """Deletes an entry, if the user is authorized to do so."""
     global last_route, cur_user, cur_entry
     last_route = "delete_entry"
     cur_user = None
     cur_entry = None
+    if not current_user.is_authenticated:
+        return redirect(url_for("login"))
     user = g.user._get_current_object()  # noqa (accessing private method)
     try:
         # Entries can only be deleted by the author.
@@ -346,12 +351,15 @@ def delete_entry(entry_id):
     return redirect(url_for("user_entries", user=user.username))
 
 
-def get_last_route(user=cur_user, entry_id=cur_entry):
-    """Returns data for the url_for method based on the last route processed."""
+def get_last_route():
+    """Returns data for the url_for method based on the last route processed.
+
+        Used to redirect the user to the previous page.
+    """
     if last_route in ["user_entries"]:
-        return url_for(last_route, user=user)
+        return url_for(last_route, user=cur_user)
     elif last_route in ["show_entry", "edit_entry", "delete_entry"]:
-        return url_for(last_route, entry_id=entry_id)
+        return url_for(last_route, entry_id=cur_entry)
     else:
         return url_for(last_route)
 

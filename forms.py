@@ -5,10 +5,10 @@ from flask_wtf import FlaskForm
 from wtforms import (
     BooleanField,
     DateField,
-    IntegerField,
     PasswordField,
     StringField,
-    TextAreaField)
+    TextAreaField,
+    TimeField)
 from wtforms.validators import (
     DataRequired,
     EqualTo,
@@ -58,7 +58,7 @@ class EntryForm(FlaskForm):
         "Date",
         default=datetime.datetime.today,
         validators=[DataRequired()])
-    time_spent = IntegerField(
+    time_spent = TimeField(
         "Time Spent",
         validators=[DataRequired()])
     learned = TextAreaField("What You Learned", validators=[InputRequired()])
@@ -73,15 +73,17 @@ class EntryForm(FlaskForm):
                                       "anyone but you.")
 
     def validate_date(form, field):  # noqa
-        try:
-            _ = datetime.datetime.strptime(field.data, "%Y-%m-%d")
-        except ValueError:
-            raise ValidationError(
-                "Please enter a date in the format yyyy-mm-dd.")
+        if type(field) == str:
+            try:
+                _ = datetime.datetime.strptime(field.data, "%Y-%m-%d")
+            except ValueError:
+                raise ValidationError(
+                    "Please enter a date in the format yyyy-mm-dd.")
 
     def validate_time_spent(form, field):  # noqa
-        try:
-            _ = time.strptime(field.data, "%H:%M")
-        except ValueError:
-            raise ValidationError(
-                "Please enter a time spent in the format hh:mm.")
+        if type(field) == str:
+            try:
+                _ = time.strptime(field.data, "%H:%M")
+            except ValueError:
+                raise ValidationError(
+                    "Please enter a time spent in the format hh:mm.")
