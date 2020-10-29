@@ -1,5 +1,9 @@
 {% extends "layout.html" %}
-{% from "macros.html" import render_listing %}
+{% from "macros.html" import render_listing, nav_bar with context %}
+
+{% block nav %}
+    {{ nav_bar(False) }}
+{% endblock %}
 
 {% block content %}
     <h2>Entries tagged “{{ tag }}”</h2>

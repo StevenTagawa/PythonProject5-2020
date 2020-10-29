@@ -1,6 +1,23 @@
 {% macro render_article(article) %}
 {% endmacro %}
 
+{% macro nav_bar(home) %}
+    <div class="nav-bar">
+        {% if home == False %}
+            <a href="{{ url_for('index') }}">Home</a>
+        {% else %}
+            Home
+        {% endif %}
+        {% if current_user.is_authenticated %}
+            <a href="{{ url_for('logout') }}">Log Out</a>
+            <a href="{{ url_for('create_entry') }}">New Entry</a>
+        {% else %}
+            <a href="{{ url_for('login') }}">Log In</a>
+            <a href="{{ url_for('register') }}">Register</a>
+        {% endif %}
+    </div>
+{% endmacro %}
+
 {% macro render_listing(listing, user, god, by) %}
     <article class="listing">
         <h2>

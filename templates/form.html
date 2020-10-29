@@ -1,5 +1,9 @@
 {% extends "layout.html" %}
-{% from "macros.html" import render_form with context %}
+{% from "macros.html" import render_form, nav_bar with context %}
+
+{% block nav %}
+    {{ nav_bar(False) }}
+{% endblock %}
 
 {% block content %}
     <form method="POST" action="" class="form">

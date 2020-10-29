@@ -137,21 +137,32 @@ def user_entries(user):
     cur_user = user
     cur_entry = None
     cur_tag = None
-    # Replicates the @login_required decorator.  Allows redirect back to the
-    # previous page.
-    if not current_user.is_authenticated:
-        return redirect(url_for("login"))
-    # Users can see all of their own entries, and non-hidden entries by others.
-    if current_user.username == user:
-        entries = current_user.entries.order_by(models.Entry.date.asc())
-    else:
+    # Users not logged in can see non-hidden entries.
+    if not current_user.is_authenticated or (current_user.username != user
+                                             and current_user.god == False):  # noqa
         entries = (models.Entry.select().where(
             models.Entry.hidden == False)  # noqa E712 (must use == in peewee)
-                   .join(User)
-                   .where(User.username == user)
+                   .join(models.User)
+                   .where(models.User.username == user)
                    .order_by(models.Entry.date.asc()))
-    return render_template("listing.html", entries=entries, user="", god=False,
-                           home=False, by="You")
+    # Logged-in users (and god) can see all their own entries, and non-hidden
+    # entries by others.
+    else:
+        entries = current_user.entries.order_by(models.Entry.date.asc())
+    if current_user.is_authenticated:
+        if current_user.god:
+            god = True
+        else:
+            god = False
+        if current_user.username == user:
+            by = current_user.username
+        else:
+            by = "You"
+    else:
+        god = False
+        by = user
+    return render_template("listing.html", entries=entries, user=user, god=god,
+                           home=False, by=by)
 
 
 @app.route("/register", methods=("GET", "POST"))

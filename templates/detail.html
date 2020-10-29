@@ -1,4 +1,9 @@
 {% extends "layout.html" %}
+{% from "macros.html" import nav_bar with context %}
+
+{% block nav %}
+    {{ nav_bar(False) }}
+{% endblock %}
 
 {% block content %}
     <div class="entry-title">{{ entry.title }}</div>
