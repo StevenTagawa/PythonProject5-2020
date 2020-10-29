@@ -91,5 +91,6 @@ def create_database():
                 models.EntryTag.create(entry=entry, tag=tag)
 
 
-models.initialize()
-create_database()
+if __name__ == "__main__":
+    models.initialize()
+    create_database()

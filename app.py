@@ -193,7 +193,6 @@ def login():
             if check_password_hash(user.password, form.password.data):
                 login_user(user)
                 flash("Login successful.", "success")
-                print(last_route, cur_user, cur_entry, cur_tag)
                 return redirect(get_last_route())
             else:
                 flash("Incorrect username or password.", "error")
@@ -269,7 +268,6 @@ def show_entry(entry_id):
     try:
         entry = models.Entry.get(models.Entry.id == entry_id)
         # Deny that hidden entries exist, except to the author (and god).
-        print(current_user)
         if not ((current_user.is_authenticated and
                  current_user.id == entry.user.id) or
                 (current_user.is_authenticated and current_user.god)):
@@ -403,19 +401,21 @@ def show_tag(tag):
     except models.DoesNotExist:
         flash(f"Tag {tag} not found.", "error")
         return redirect(get_last_route())
-    entries = search_tag.entries()
+    all_entries = search_tag.entries()
     # Users who are not logged in do not see any hidden entries.
     if not current_user.is_authenticated:
-        # Iterate over (but not through) the list of entries backwards.  (This
-        # allows items to be deleted from the list safely.)
-        for ndx in list(range(len(entries)))[::-1]:
-            if entries[ndx].hidden:
-                del entries[ndx]
+        entries = []
+        for entry in all_entries:
+            if not entry.hidden:
+                entries.append(entry)
     # Non-god users see only their own hidden entries.
     elif not current_user.god:
-        for ndx in list(range(len(entries)))[::-1]:
-            if entries[ndx].hidden and entries[ndx].user != current_user.id:
-                del entries[ndx]
+        entries = []
+        for entry in all_entries:
+            if not (entry.hidden and entry.user.id != current_user.id):
+                entries.append(entry)
+    else:
+        entries = all_entries
     # If all matching records got filtered out, do not reveal that there were
     # matching hidden records.
     if len(entries) == 0:
