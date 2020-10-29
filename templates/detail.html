@@ -3,7 +3,7 @@
 {% block content %}
     <div class="entry-title">{{ entry.title }}</div>
     <div class="entry-date">{{ entry.date }}</div>
-    <div class="entry-time-spent">Time spent:  {{ entry.time_spent }}</div>
+    <div class="entry-time-spent">Time spent:  {{ entry.time_spent.strftime("%H:%M") }}</div>
     <div class="entry-learned">What I learned:  {{ entry.learned }}</div>
     <div class="entry-resources">Resources:  {{ entry.resources }}</div>
     <div class="entry-tags">

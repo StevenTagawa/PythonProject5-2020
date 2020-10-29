@@ -23,7 +23,6 @@ import random
 import forms
 import models
 
-
 # Constants.
 DEBUG = True
 PORT = 8000
@@ -62,7 +61,7 @@ def load_user(userid):
         return None
 
 
-# Routes for the flask app.
+# Housekeeping.
 @app.before_request
 def before_request():
     """Connect to the database before each request."""
@@ -78,6 +77,7 @@ def after_request(response):
     return response
 
 
+# View routes for the app.
 @app.route("/")
 def index(home=True):
     """Home page.
@@ -86,7 +86,7 @@ def index(home=True):
     entries.  If a user is logged in, also displays links for the user's private
     and hidden entries.
     """
-    global last_route, cur_user, cur_entry
+    global last_route, cur_user, cur_entry, cur_tag
     last_route = "index"
     cur_user = None
     cur_entry = None
@@ -100,7 +100,7 @@ def index(home=True):
                  (models.Entry.user != current_user.id)
                  ) |
                 (models.Entry.user == current_user.id))
-                       .order_by(models.Entry.date.desc()))
+                       .order_by(models.Entry.date.asc()))
         return render_template(
             "listing.html", entries=entries, user=current_user.username,
             god=current_user.god, home=home, by="All")
@@ -115,11 +115,12 @@ def index(home=True):
 @app.route("/entries")
 def entries():
     """Prevents url_for from constructing "/entries" for "index"."""
-    global last_route, cur_user, cur_entry
+    global last_route, cur_user, cur_entry, cur_tag
     last_route = "entries"
     cur_user = None
     cur_entry = None
     cur_tag = None
+    # Just calls the index view (but makes clear this is not the homepage).
     index(home=False)
 
 
@@ -131,13 +132,16 @@ def user_entries(user):
         and links for all entries.  Otherwise, displays title and date for all
         non-hidden entries, and links for all public entries.
     """
-    global last_route, cur_user, cur_entry
+    global last_route, cur_user, cur_entry, cur_tag
     last_route = "user_entries"
     cur_user = user
     cur_entry = None
     cur_tag = None
+    # Replicates the @login_required decorator.  Allows redirect back to the
+    # previous page.
     if not current_user.is_authenticated:
         return redirect(url_for("login"))
+    # Users can see all of their own entries, and non-hidden entries by others.
     if current_user.username == user:
         entries = current_user.entries.order_by(models.Entry.date.asc())
     else:
@@ -154,6 +158,7 @@ def user_entries(user):
 def register():
     """Creates a new user account."""
     form = forms.RegisterForm()
+    # Create a new user account only if the username doesn't already exist.
     if form.validate_on_submit():
         try:
             models.User.get(models.User.username == form.username.data)
@@ -169,6 +174,7 @@ def register():
                 models.User.username == form.username.data))
             return redirect(get_last_route())
         else:
+            # If an existing username is used, prompt to log in using it.
             flash("User already exists", "error")
             return redirect(url_for("login"))
     return render_template("form.html", button="Register", form=form)
@@ -183,9 +189,11 @@ def login():
         except models.DoesNotExist:
             flash("Incorrect username or password.", "error")
         else:
+            # If the login is successful, redirect back to the previous page.
             if check_password_hash(user.password, form.password.data):
                 login_user(user)
                 flash("Login successful.", "success")
+                print(last_route, cur_user, cur_entry, cur_tag)
                 return redirect(get_last_route())
             else:
                 flash("Incorrect username or password.", "error")
@@ -194,22 +202,26 @@ def login():
 
 @app.route("/logout")
 def logout():
+    # No logging out without being logged in first.
     if not current_user.is_authenticated:
         flash("You cannot log out; you are not logged in.", "error")
         return redirect(get_last_route())
     logout_user()
     flash("Logout successful.", "success")
+    # Just send the user back to the homepage (to avoid landing on a page that
+    # will just prompt the user to log in again).
     return redirect(url_for("index"))
 
 
 @app.route("/entries/new", methods=("GET", "POST"))
 def create_entry():
     """Creates a new entry."""
-    global last_route, cur_user, cur_entry
+    global last_route, cur_user, cur_entry, cur_tag
     last_route = "create_entry"
     cur_user = None
     cur_entry = None
     cur_tag = None
+    # Prompt to login, if the user isn't already.
     if not current_user.is_authenticated:
         return redirect(url_for("login"))
     user = g.user._get_current_object()  # noqa (accessing private method)
@@ -218,6 +230,7 @@ def create_entry():
         # All entries marked hidden are also private.
         if form.hidden.data:
             form.private.data = True
+        # Record creation.
         models.Entry.create(
             user=user,
             title=form.title.data,
@@ -240,6 +253,7 @@ def create_entry():
                     tag = models.Tag.create(name=tag)
                 models.EntryTag.create(entry=entry, tag=tag)
         flash("Entry saved.", "success")
+        # Send the user back to their own page.
         return redirect(url_for("user_entries", user=user.username))
     return render_template("form.html", button="Create", form=form)
 
@@ -247,7 +261,7 @@ def create_entry():
 @app.route("/entries/<int:entry_id>", methods=("GET", "POST"))
 def show_entry(entry_id):
     """Displays a single entry, if the user is authorized to view it."""
-    global last_route, cur_user, cur_entry
+    global last_route, cur_user, cur_entry, cur_tag
     last_route = "show_entry"
     cur_user = None
     cur_entry = entry_id
@@ -255,8 +269,10 @@ def show_entry(entry_id):
     try:
         entry = models.Entry.get(models.Entry.id == entry_id)
         # Deny that hidden entries exist, except to the author (and god).
-        if (not current_user.is_authenticated or
-                (not current_user.god and current_user.id != entry.user)):
+        print(current_user)
+        if not ((current_user.is_authenticated and
+                 current_user.id == entry.user.id) or
+                (current_user.is_authenticated and current_user.god)):
             if entry.hidden:
                 flash("Entry does not exist.", "error")
                 raise models.DoesNotExist
@@ -276,11 +292,12 @@ def show_entry(entry_id):
 @app.route("/entries/<int:entry_id>/edit", methods=("GET", "POST"))
 def edit_entry(entry_id):
     """Allows the user to edit an entry, if they are authorized to do so."""
-    global last_route, cur_user, cur_entry
+    global last_route, cur_user, cur_entry, cur_tag
     last_route = "edit_entry"
     cur_user = None
     cur_entry = entry_id
     cur_tag = None
+    # Prompt to login if the user isn't already.
     if not current_user.is_authenticated:
         return redirect(url_for("login"))
     try:
@@ -289,10 +306,12 @@ def edit_entry(entry_id):
         if g.user._get_current_object() != entry.user:  # noqa
             raise models.DoesNotExist
     except models.DoesNotExist:
+        # Display a non-specific error message.
         flash("Cannot edit entry.", "error")
         return redirect(url_for("index"))
     form = forms.EntryForm()
     old_tags = []
+    # Only pre-populate the fields before initial display.
     if request.method == "GET":
         # Get the current tag list to compare to any changes the user makes.
         old_tags = [tag.name for tag in entry.get_tags()]
@@ -304,6 +323,7 @@ def edit_entry(entry_id):
         form.tags.data = entry.tags
         form.private.data = entry.private
         form.hidden.data = entry.hidden
+    # Process the submitted form.
     if form.validate_on_submit():
         entry.title = form.title.data
         entry.date = form.date.data
@@ -341,11 +361,12 @@ def edit_entry(entry_id):
 @app.route("/entries/<int:entry_id>/delete", methods=("GET", "POST"))
 def delete_entry(entry_id):
     """Deletes an entry, if the user is authorized to do so."""
-    global last_route, cur_user, cur_entry
+    global last_route, cur_user, cur_entry, cur_tag
     last_route = "delete_entry"
     cur_user = None
-    cur_entry = None
+    cur_entry = entry_id
     cur_tag = None
+    # Prompt to log in if the user isn't already.
     if not current_user.is_authenticated:
         return redirect(url_for("login"))
     user = g.user._get_current_object()  # noqa (accessing private method)
@@ -356,7 +377,7 @@ def delete_entry(entry_id):
             raise models.DoesNotExist
     except models.DoesNotExist:
         flash("Cannot delete entry.", "error")
-        return redirect(url_for(last_route))
+        return redirect(url_for("show_entry", entry_id=entry_id))
     # Delete associated tags before deleting the entry.
     models.EntryTag.delete().where(models.EntryTag.entry == entry)
     entry.delete_instance()
@@ -370,7 +391,7 @@ def show_tag(tag):
 
         Shows hidden entries only to the author (or to god).
     """
-    global last_route, cur_user, cur_entry
+    global last_route, cur_user, cur_entry, cur_tag
     last_route = "show_tag"
     cur_user = None
     cur_entry = None
@@ -399,11 +420,13 @@ def show_tag(tag):
     # matching hidden records.
     if len(entries) == 0:
         flash(f"Tag {tag} not found.", "error")
+        # Note request.referrer actually works for non-form views.
         return redirect(request.referrer)
     return render_template("tag_listing.html", entries=entries, user="",
                            god=False, home=False, by="All", tag=tag)
 
 
+# Supporting functions.
 def get_last_route():
     """Returns data for the url_for method based on the last route processed.
 
