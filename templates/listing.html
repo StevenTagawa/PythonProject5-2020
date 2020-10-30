@@ -6,7 +6,7 @@
 {% endblock %}
 
 {% block content %}
-    <h2>Posts by {{ by }}</h2>
+    <h2>Entries by {{ by }}</h2>
     <hr>
     {% for entry in entries %}
         {{ render_listing(entry, user, god, by) }}

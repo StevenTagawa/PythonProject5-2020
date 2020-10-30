@@ -2,15 +2,23 @@
 {% endmacro %}
 
 {% macro nav_bar(home) %}
+    <!-- Macro that constructs the navigation bar.
+
+        Arguments:
+        home - flag indicating if the calling page is the home page.
+    -->
     <div class="nav-bar">
+        <!-- Home link is active only if the calling page is not the home page. -->
         {% if home == False %}
             <a href="{{ url_for('index') }}">Home</a>
         {% else %}
             Home
         {% endif %}
+        <!-- If the user is logged in, Log Out and New Entry links appear. -->
         {% if current_user.is_authenticated %}
             <a href="{{ url_for('logout') }}">Log Out</a>
             <a href="{{ url_for('create_entry') }}">New Entry</a>
+        <!-- If the user is not logged in, Log In and Register links appear -->
         {% else %}
             <a href="{{ url_for('login') }}">Log In</a>
             <a href="{{ url_for('register') }}">Register</a>
@@ -19,8 +27,17 @@
 {% endmacro %}
 
 {% macro render_listing(listing, user, god, by) %}
+    <!-- Macro that displays the title, author, and date of an entry.
+
+        Arguments:
+        listing - the entry, an Entry model record.
+        user - the current user
+        god - flag indicating whether the current user is god-level.
+        by - the user whose entries are being displayed.  "All" if all users' entries are being displayed.
+    -->
     <article class="listing">
         <h2>
+            <!-- A link to the full entry is displayed only if the current user is the author, or is god-level -->
             {% if (listing.private == False) or (listing.user.username == user) or (god == True) %}
                 <a href="/entries/{{ listing.id }}">
             {% endif %}
@@ -29,14 +46,17 @@
                 </a>
             {% endif %}
         </h2>
+        <!-- Authors of individual entries are only displayed when entries of multiple users are being displayed. -->
+        <p>
         {% if by == "All" %}
-            <p>by:
+            <!-- A link to the author's entries. -->
+            by: <a href="{{ url_for('user_entries', user=listing.user.username) }}">
             {% if listing.user.username == user %}
-                YOU
+                You
             {% else %}
                 {{ listing.user.username }}
-            {% endif %}</p>
+            {% endif %}</a><br>
         {% endif %}
-        <time datetime="{{ listing.date }}">{{ listing.date }}</time>
+        Posted on: <time datetime="{{ listing.date }}">{{ listing.date }}</time></p>
     </article>
 {% endmacro %}

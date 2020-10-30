@@ -148,20 +148,27 @@ def user_entries(user):
     # Logged-in users (and god) can see all their own entries, and non-hidden
     # entries by others.
     else:
-        entries = current_user.entries.order_by(models.Entry.date.asc())
+        try:
+            target_user = models.User.get(models.User.username == user)
+        except models.DoesNotExist:
+            flash("User does not exist.", "error")
+            return redirect(url_for("index"))
+        entries = target_user.entries.order_by(models.Entry.date.asc())
     if current_user.is_authenticated:
+        user_ = current_user.username
         if current_user.god:
             god = True
         else:
             god = False
         if current_user.username == user:
-            by = current_user.username
-        else:
             by = "You"
+        else:
+            by = user
     else:
         god = False
         by = user
-    return render_template("listing.html", entries=entries, user=user, god=god,
+        user_ = ""
+    return render_template("listing.html", entries=entries, user=user_, god=god,
                            home=False, by=by)
 
 
@@ -174,7 +181,6 @@ def register():
         try:
             models.User.get(models.User.username == form.username.data)
         except models.DoesNotExist:
-            flash("Registration successful", "success")
             models.User.create_user(
                 username=form.username.data,
                 password=form.password.data,
@@ -215,7 +221,7 @@ def logout():
     # No logging out without being logged in first.
     if not current_user.is_authenticated:
         flash("You cannot log out; you are not logged in.", "error")
-        return redirect(get_last_route())
+        return redirect(url_for("index"))
     logout_user()
     flash("Logout successful.", "success")
     # Just send the user back to the homepage (to avoid landing on a page that
@@ -241,7 +247,7 @@ def create_entry():
         if form.hidden.data:
             form.private.data = True
         # Record creation.
-        models.Entry.create(
+        entry = models.Entry.create(
             user=user,
             title=form.title.data,
             date=form.date.data,
@@ -276,26 +282,40 @@ def show_entry(entry_id):
     cur_user = None
     cur_entry = entry_id
     cur_tag = None
+    message = None
+    category = None
     try:
         entry = models.Entry.get(models.Entry.id == entry_id)
         # Deny that hidden entries exist, except to the author (and god).
-        if not ((current_user.is_authenticated and
-                 current_user.id == entry.user.id) or
-                (current_user.is_authenticated and current_user.god)):
+        if not (current_user.is_authenticated and
+                (current_user.id == entry.user.id or current_user.god)):
             if entry.hidden:
-                flash("Entry does not exist.", "error")
+                message = "Entry does not exist."
+                category = "error"
                 raise models.DoesNotExist
             elif entry.private:
-                flash("Entry is private.", "error")
+                message = "Entry is private."
+                category = "error"
                 raise models.DoesNotExist
     except models.DoesNotExist:
+        if not message:
+            message = "Entry does not exist."
+            category = "error"
+        flash(message, category)
         return redirect(url_for("index"))
     # The template needs the entry's tags in list form.
     tags = [tag.strip() for tag in entry.tags.split(",")]
     # If there are no tags, send an empty list rather than an empty string.
     if tags == [""]:
         tags = []
-    return render_template("detail.html", entry=entry, tags=tags)
+    # Set flag to show delete link (only if the user is the entry's author or is
+    # god).
+    if (current_user.is_authenticated and
+            (current_user.id == entry.user.id or current_user.god)):
+        author = True
+    else:
+        author = False
+    return render_template("detail.html", entry=entry, tags=tags, author=author)
 
 
 @app.route("/entries/<int:entry_id>/edit", methods=("GET", "POST"))
@@ -309,15 +329,16 @@ def edit_entry(entry_id):
     # Prompt to login if the user isn't already.
     if not current_user.is_authenticated:
         return redirect(url_for("login"))
+    user = g.user._get_current_object()  # noqa (accessing private method)
     try:
-        # Entries can only be edited by the author.
+        # Entries can only be edited by the author (or god).
         entry = models.Entry.get(models.Entry.id == entry_id)
-        if g.user._get_current_object() != entry.user:  # noqa
+        if (user != entry.user and user.god == False):  # noqa
             raise models.DoesNotExist
     except models.DoesNotExist:
         # Display a non-specific error message.
         flash("Cannot edit entry.", "error")
-        return redirect(url_for("index"))
+        return redirect(url_for("show_entry", entry_id=entry_id))
     form = forms.EntryForm()
     old_tags = []
     # Only pre-populate the fields before initial display.
@@ -382,16 +403,17 @@ def delete_entry(entry_id):
     try:
         # Entries can only be deleted by the author.
         entry = models.Entry.get(models.Entry.id == entry_id)
-        if user != entry.user:
+        if (user != entry.user and user.god == False):  # noqa
             raise models.DoesNotExist
     except models.DoesNotExist:
         flash("Cannot delete entry.", "error")
         return redirect(url_for("show_entry", entry_id=entry_id))
+    target_user = entry.user.username
     # Delete associated tags before deleting the entry.
     models.EntryTag.delete().where(models.EntryTag.entry == entry)
     entry.delete_instance()
     flash("Entry deleted.", "success")
-    return redirect(url_for("user_entries", user=user.username))
+    return redirect(url_for("user_entries", user=target_user))
 
 
 @app.route("/tags/<tag>")
