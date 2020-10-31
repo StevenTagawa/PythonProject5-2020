@@ -10,18 +10,18 @@
     <div class="nav-bar">
         <!-- Home link is active only if the calling page is not the home page. -->
         {% if home == False %}
-            <a href="{{ url_for('index') }}">Home</a>
+            <a class="button" href="{{ url_for('index') }}">Home</a>
         {% else %}
-            Home
+            <div class="button button-inactive">Home</div>
         {% endif %}
         <!-- If the user is logged in, Log Out and New Entry links appear. -->
         {% if current_user.is_authenticated %}
-            <a href="{{ url_for('logout') }}">Log Out</a>
-            <a href="{{ url_for('create_entry') }}">New Entry</a>
+            <a class="button button-right" href="{{ url_for('logout') }}">Log Out</a>
+            <a class="button button-right" href="{{ url_for('create_entry') }}">New Entry</a>
         <!-- If the user is not logged in, Log In and Register links appear -->
         {% else %}
-            <a href="{{ url_for('login') }}">Log In</a>
-            <a href="{{ url_for('register') }}">Register</a>
+            <a class="button button-right" href="{{ url_for('login') }}">Log In</a>
+            <a class="button button-right" href="{{ url_for('register') }}">Register</a>
         {% endif %}
     </div>
 {% endmacro %}
@@ -44,6 +44,8 @@
                 {{ listing.title }}
             {% if (listing.private == False) or (listing.user.username == user) or (god == True) %}
                 </a>
+            {% else %}
+                &nbsp;<span class="small">[private]</span>
             {% endif %}
         </h2>
         <!-- Authors of individual entries are only displayed when entries of multiple users are being displayed. -->

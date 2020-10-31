@@ -1,22 +1,43 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Learning Journal</title>
-</head>
-<body>
-    {% with messages = get_flashed_messages(with_categories=True) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                <div class="notification {{ category }}">{{ message }}</div>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
-
-    {% block nav %}
-    {% endblock %}
-
-    {% block content %}
-    {% endblock %}
-</body>
+    <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="x-ua-compatible" content="ie=edge">
+        <title>Learning Journal</title>
+        <link href="https://fonts.googleapis.com/css2?family=Sarina&display=swap" rel="stylesheet">
+        <link rel="stylesheet" href="../static/css/normalize.css">
+        <link rel="stylesheet" href="../static/css/site.css">
+    </head>
+    <body>
+        <header>
+        <div class="container">
+            <div class="messages">
+                {% with messages = get_flashed_messages(with_categories=True) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="notification {{ category }}">{{ message }}</div>
+                        {% endfor %}
+                    {% else %}
+                            <div class="notification success">Status:  Working,
+                                {% if current_user.is_authenticated %}
+                                    logged in as {{ current_user.username }}
+                                {% else %}
+                                    not logged in
+                                {% endif %}
+                            </div>
+                    {% endif %}
+                {% endwith %}
+            </div>
+        </div>
+            <h1>Learning Journal</h1>
+        </header>
+        <section>
+            {% block nav %}
+            {% endblock %}
+        </section>
+        <section>
+            {% block content %}
+            {% endblock %}
+        </section>
+    </body>
 </html>
