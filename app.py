@@ -5,6 +5,7 @@ from flask import (
     flash,
     Flask,
     g,
+    get_flashed_messages,
     redirect,
     render_template,
     request,
@@ -120,8 +121,7 @@ def entries():
     cur_user = None
     cur_entry = None
     cur_tag = None
-    # Just calls the index view (but makes clear this is not the homepage).
-    index(home=False)
+    return redirect(url_for("index"))
 
 
 @app.route("/entries/<user>")
@@ -336,7 +336,9 @@ def edit_entry(entry_id):
         if (user != entry.user and user.god == False):  # noqa
             raise models.DoesNotExist
     except models.DoesNotExist:
-        # Display a non-specific error message.
+        # Display a non-specific error message. (If redirected from the login
+        # page, flush the login message.)
+        get_flashed_messages()
         flash("Cannot edit entry.", "error")
         return redirect(url_for("show_entry", entry_id=entry_id))
     form = forms.EntryForm()
@@ -406,6 +408,7 @@ def delete_entry(entry_id):
         if (user != entry.user and user.god == False):  # noqa
             raise models.DoesNotExist
     except models.DoesNotExist:
+        get_flashed_messages()
         flash("Cannot delete entry.", "error")
         return redirect(url_for("show_entry", entry_id=entry_id))
     target_user = entry.user.username

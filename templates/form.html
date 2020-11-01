@@ -1,5 +1,5 @@
 {% extends "layout.html" %}
-{% from "macros.html" import render_form, nav_bar with context %}
+{% from "macros.html" import nav_bar with context %}
 
 {% block nav %}
     {{ nav_bar(False) }}
@@ -7,17 +7,30 @@
 
 {% block content %}
     <form method="POST" action="" class="form">
+        {{ form.hidden_tag() }}
+        <table>
         {% for field in form %}
-            <div class="field-{{ field.id }}">
+            <tr><td>
+            <div class="field-{{ field.name }}">
                 {% if field.errors %}
                     {% for error in field.errors %}
                         <div class="notification error">{{ error }}</div>
                     {% endfor %}
                 {% endif %}
-                {{ field(placeholder=field.label.text) }}
+                {% if field.type == "BooleanField" %}
+                <!--suppress XmlInvalidId -->
+                <label for="{{ field.name }}">{{ field(placeholder=field.label.text) }} {{ field.label }} {{ field.description }}</label>
+                {% else %}
+                    {% if field.id != "csrf_token" %}
+                        {{ field.label }} {{ field.description }}
+                    {% endif %}
+                    {{ field(placeholder=field.label.text) }}
+                {% endif %}
             </div>
+            </td></tr>
         {% endfor %}
+        </table>
         <button type="submit" id="submit">{{ button }}</button>
-        <a href="index.html" class="cancel-button">Cancel</a>
+        <a href="{{ url_for('index') }}" class="cancel-button">Cancel</a>
     </form>
 {% endblock %}

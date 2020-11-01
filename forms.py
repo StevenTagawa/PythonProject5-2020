@@ -60,17 +60,18 @@ class EntryForm(FlaskForm):
         validators=[DataRequired()])
     time_spent = TimeField(
         "Time Spent",
-        validators=[DataRequired()])
+        validators=[DataRequired()],
+        description=" (hours:minutes)")
     learned = TextAreaField("What You Learned", validators=[InputRequired()])
     resources = TextAreaField("Resources to Remember")
     tags = StringField("Tags",
-                       description="Please enter tags separated by commas.")
+                       description=" (Please enter tags separated by commas.)")
     private = BooleanField("Private", default=False,
-                           description="Private entries cannot be read by "
-                                       "anyone but you.")
+                           description=" (Private entries cannot be read by "
+                                       "anyone but you.)")
     hidden = BooleanField("Hidden", default=False,
-                          description="Hidden entries will not appear to "
-                                      "anyone but you.")
+                          description=" (Hidden entries will not appear to "
+                                      "anyone but you.)")
 
     def validate_date(form, field):  # noqa
         if type(field) == str:

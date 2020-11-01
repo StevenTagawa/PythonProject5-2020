@@ -1,6 +1,3 @@
-{% macro render_article(article) %}
-{% endmacro %}
-
 {% macro nav_bar(home) %}
     <!-- Macro that constructs the navigation bar.
 
@@ -36,10 +33,10 @@
         by - the user whose entries are being displayed.  "All" if all users' entries are being displayed.
     -->
     <article class="listing">
-        <h2>
+        <h3>
             <!-- A link to the full entry is displayed only if the current user is the author, or is god-level -->
             {% if (listing.private == False) or (listing.user.username == user) or (god == True) %}
-                <a href="/entries/{{ listing.id }}">
+                <a class="entry-link" href="/entries/{{ listing.id }}">
             {% endif %}
                 {{ listing.title }}
             {% if (listing.private == False) or (listing.user.username == user) or (god == True) %}
@@ -47,7 +44,7 @@
             {% else %}
                 &nbsp;<span class="small">[private]</span>
             {% endif %}
-        </h2>
+        </h3>
         <!-- Authors of individual entries are only displayed when entries of multiple users are being displayed. -->
         <p>
         {% if by == "All" %}
@@ -59,6 +56,6 @@
                 {{ listing.user.username }}
             {% endif %}</a><br>
         {% endif %}
-        Posted on: <time datetime="{{ listing.date }}">{{ listing.date }}</time></p>
+        Posted on: <time datetime="{{ listing.date }}">{{ listing.date.strftime("%B %d").lstrip("0").replace(" 0", " ") }}, {{ listing.date.strftime("%Y") }}</time></p>
     </article>
 {% endmacro %}

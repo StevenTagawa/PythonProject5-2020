@@ -35,7 +35,7 @@ entries = [
      "little man Dark Helmet on this.", "How to Con Friends and Fleece People",
      "air supply, Dark Helmet, Druidia", True, True),
     ("prez_skroob", "Planet of the Apes", "5455-03-28", "8:00",
-     "I should“ve known better than to trust those idiots!  Helmet and that "
+     "I should’ve known better than to trust those idiots!  Helmet and that "
      "chicken Col. Sanders are both fired, as soon I get back home.  At least "
      "there’s air here.  Maybe I can find a way to steal it when I leave.",
      "So You've Crash-Landed on an Unknown Planet (Now What?)",
