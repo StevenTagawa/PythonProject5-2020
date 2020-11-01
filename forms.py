@@ -57,7 +57,8 @@ class EntryForm(FlaskForm):
     date = DateField(
         "Date",
         default=datetime.datetime.today,
-        validators=[DataRequired()])
+        validators=[DataRequired()],
+        description=" (yyyy-mm-dd)")
     time_spent = TimeField(
         "Time Spent",
         validators=[DataRequired()],

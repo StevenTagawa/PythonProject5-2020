@@ -6,11 +6,12 @@
 {% endblock %}
 
 {% block content %}
+    {% if button == "Update" %}
+        <h2>Editing: “{{ form.title.data }}”</h2>
+    {% endif %}
     <form method="POST" action="" class="form">
         {{ form.hidden_tag() }}
-        <table>
         {% for field in form %}
-            <tr><td>
             <div class="field-{{ field.name }}">
                 {% if field.errors %}
                     {% for error in field.errors %}
@@ -27,10 +28,8 @@
                     {{ field(placeholder=field.label.text) }}
                 {% endif %}
             </div>
-            </td></tr>
         {% endfor %}
-        </table>
         <button type="submit" id="submit">{{ button }}</button>
-        <a href="{{ url_for('index') }}" class="cancel-button">Cancel</a>
+        <a class="button" href="{{ url_for('index') }}">Cancel</a>
     </form>
 {% endblock %}
