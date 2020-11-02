@@ -24,7 +24,7 @@ entries.  Log in to an existing account or create a new account to test the
 application's features.
 
 If you need to recreate the original journal.db, run "debug_test.py".  Note that
-if you do not delete the existing journal.py before doing this, "debug_test.py"
+if you do not delete the existing journal.db before doing this, "debug_test.py"
 will create duplicate entries.
 
 **Users:**
