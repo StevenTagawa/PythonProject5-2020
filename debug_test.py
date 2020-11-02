@@ -138,7 +138,6 @@ entries = [
 
 
 def create_database():
-    x = 1
     for user, password, god in users:
         try:
             models.User.create_user(
@@ -160,8 +159,6 @@ def create_database():
             tags=tags,
             private=private,
             hidden=hidden)
-        print(x)
-        x += 1
         # Tags need to be added to the Tag and EntryTag tables.  Searches for
         # tags may be case-insensitive, but actual tags will be stored as-is.
         if tags:
