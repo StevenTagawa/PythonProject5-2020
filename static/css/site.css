@@ -2,6 +2,10 @@
    Global Styles
    ========================================================================== */
 
+html {
+    margin-left: calc(100vw - 100%);
+}
+
 body {
 	font-size: 16px;
     font-family: 'Asap', sans-serif;
@@ -10,12 +14,12 @@ body {
 }
 
 section {
-    max-width: 800px;
+    max-width: 1000px;
     margin: auto;
 }
 
 header {
-    margin: 0 auto;
+    margin: 0 -1%;
     padding-bottom: 6px;
     text-align: center;
     color: #154666;
@@ -75,6 +79,7 @@ a.button:hover, a:active {
 h1 {
     font-size: 96px;
     font-family: "Sarina", cursive;
+    font-weight: 400;
     line-height: 25%;
 
 }
@@ -110,6 +115,10 @@ h3 {
    Page Styles
    ========================================================================== */
 
+.main {
+    text-align: center;
+}
+
 .messages {
     height: 36px;
     background: #90ee90;
@@ -126,6 +135,7 @@ h3 {
 .error {
   background: red;
   color: white;
+  border-radius: 5px;
 }
 
 .nav-bar, .main {

@@ -42,7 +42,7 @@
             {% if (listing.private == False) or (listing.user.username == user) or (god == True) %}
                 </a>
             {% else %}
-                &nbsp;<span class="small">[private]</span>
+                <span class="small">[private]</span>
             {% endif %}
         </h3>
         <!-- Authors of individual entries are only displayed when entries of multiple users are being displayed. -->

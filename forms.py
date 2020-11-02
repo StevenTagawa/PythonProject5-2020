@@ -61,11 +61,9 @@ class EntryForm(FlaskForm):
     date = DateField(
         "Date",
         default=datetime.datetime.today,
-        validators=[InputRequired()],
         description=" (yyyy-mm-dd)")
     time_spent = TimeField(
         "Time Spent",
-        validators=[InputRequired()],
         description=" (hours:minutes)")
     learned = TextAreaField("What You Learned", validators=[InputRequired()])
     resources = TextAreaField("Resources to Remember")
@@ -77,7 +75,7 @@ class EntryForm(FlaskForm):
     hidden = BooleanField("Hidden", default=False,
                           description=" (Hidden entries will not appear to "
                                       "anyone but you.)")
-
+"""
     def validate_date(form, field):  # noqa
         if type(field) == str:
             try:
@@ -87,7 +85,8 @@ class EntryForm(FlaskForm):
                     "Please enter a date in the format yyyy-mm-dd.")
         else:
             raise ValidationError(
-                "Please enter a date in the format yyyy-mm-dd.")
+                "Please enter a date in the format yyyy-mm-dd. (This is the "
+                "wrong message.)")
 
     def validate_time_spent(form, field):  # noqa
         if type(field) == str:
@@ -98,4 +97,6 @@ class EntryForm(FlaskForm):
                     "Please enter a time spent in the format hh:mm.")
         else:
             raise ValidationError(
-                "Please enter a time spent in the format hh:mm.")
+                "Please enter a time spent in the format hh:mm. (This is the "
+                "wrong message.)")
+"""
