@@ -14,10 +14,6 @@ section {
     margin: auto;
 }
 
-hr {
-    border: 1px dotted #8baad6;
-}
-
 header {
     margin: 0 auto;
     padding-bottom: 6px;
@@ -101,7 +97,8 @@ h3 {
 
 .small {
     font-size: 12px;
-    color: red
+    color: red;
+    font-style: italic;
 }
 
 .entry-privacy {
@@ -131,7 +128,7 @@ h3 {
   color: white;
 }
 
-.nav-bar {
+.nav-bar, .main {
     border-bottom: 2px dotted #8baad6;
 }
 
@@ -153,8 +150,13 @@ h3 {
 	text-align: center;
 }
 
-table {
-    width: 100%;
+.entry-multiline {
+    white-space: pre-wrap;
+}
+
+footer {
+    padding: 20px;
+    text-align: center;
 }
 
 /* ==========================================================================

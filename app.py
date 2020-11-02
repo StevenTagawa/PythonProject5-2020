@@ -194,7 +194,8 @@ def register():
             # If an existing username is used, prompt to log in using it.
             flash("User already exists", "error")
             return redirect(url_for("login"))
-    return render_template("form.html", button="Register", form=form)
+    return render_template(
+        "form.html", button="Register", form=form, cancel_url=get_last_route())
 
 
 @app.route("/login", methods=("GET", "POST"))
@@ -213,7 +214,8 @@ def login():
                 return redirect(get_last_route())
             else:
                 flash("Incorrect username or password.", "error")
-    return render_template("form.html", button="Log In", form=form)
+    return render_template(
+        "form.html", button="Log In", form=form, cancel_url=get_last_route())
 
 
 @app.route("/logout")
@@ -271,7 +273,8 @@ def create_entry():
         flash("Entry saved.", "success")
         # Send the user back to their own page.
         return redirect(url_for("user_entries", user=user.username))
-    return render_template("form.html", button="Create", form=form)
+    return render_template(
+        "form.html", button="Create", form=form, cancel_url=url_for("index"))
 
 
 @app.route("/entries/<int:entry_id>", methods=("GET", "POST"))
@@ -387,7 +390,8 @@ def edit_entry(entry_id):
                 models.EntryTag.create(entry=entry, tag=tag)
         flash("Entry edited.", "success")
         return redirect(url_for("show_entry", entry_id=entry_id))
-    return render_template("form.html", button="Update", form=form)
+    return render_template(
+        "form.html", button="Update", form=form, cancel_url=get_last_route())
 
 
 @app.route("/entries/<int:entry_id>/delete", methods=("GET", "POST"))
@@ -468,7 +472,9 @@ def get_last_route():
 
         Used to redirect the user to the previous page.
     """
-    if last_route in ["user_entries"]:
+    if last_route is None:
+        return url_for("index")
+    elif last_route in ["user_entries"]:
         return url_for(last_route, user=cur_user)
     elif last_route in ["show_entry", "edit_entry", "delete_entry"]:
         return url_for(last_route, entry_id=cur_entry)

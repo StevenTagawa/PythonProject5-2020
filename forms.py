@@ -14,6 +14,7 @@ from wtforms.validators import (
     EqualTo,
     InputRequired,
     Length,
+    NoneOf,
     Regexp,
     ValidationError)
 
@@ -30,9 +31,10 @@ class RegisterForm(FlaskForm):
         "Username",
         validators=[
             InputRequired(),
-            Regexp(
-                r"^[a-zA-Z0-9]+$",
-                message="Usernames may only contain letters and numbers."),
+            Regexp(r"^[a-z0-9_]+$",
+                   message="Usernames may only contain lowercase letters, "
+                           "numbers, and underscores"),
+            NoneOf(["you"], message="Invalid username (reserved)"),
             name_exists])
     password = PasswordField(
         "Password",
@@ -48,7 +50,9 @@ class RegisterForm(FlaskForm):
 
 
 class LoginForm(FlaskForm):
-    username = StringField("Username", validators=[InputRequired()])
+    username = StringField(
+        "Username",
+        validators=[InputRequired()])
     password = PasswordField("Password", validators=[InputRequired()])
 
 

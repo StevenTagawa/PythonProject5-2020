@@ -6,9 +6,11 @@
 {% endblock %}
 
 {% block content %}
+    <div class="main">
     <h2>Entries by {{ by }}</h2>
     <hr>
     {% for entry in entries %}
         {{ render_listing(entry, user, god, by) }}
     {% endfor %}
+    </div>
 {% endblock %}

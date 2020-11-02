@@ -13,8 +13,8 @@ entries = [
     ("god", "The First Day", "0001-01-01", "12:30",
      "“Create a universe!” they said.  “It'll be fun!” they said.  Phooey.  "
      "I spent the whole day just trying to get things to light up.",
-     "Big Bangs for Dummies, 3rd Ed.; Gravity Made Simple (How to Create a "
-     "Non-Collapsing Universe); Dark Matter, Dark Energy, and Other Pranks You "
+     "Big Bangs for Dummies, 3rd Ed.\nGravity Made Simple (How to Create a "
+     "Non-Collapsing Universe)\nDark Matter, Dark Energy, and Other Pranks You "
      "Can Play on Unsuspecting Mortals (revised)",
      "creation, big bang, light", False, False),
     ("god", "So Much for the Garden Idea", "0001-01-25", "2:15",
@@ -36,20 +36,27 @@ entries = [
      "air supply, Dark Helmet, Druidia", True, True),
     ("prez_skroob", "Planet of the Apes", "5455-03-28", "8:00",
      "I should’ve known better than to trust those idiots!  Helmet and that "
-     "chicken Col. Sanders are both fired, as soon I get back home.  At least "
-     "there’s air here.  Maybe I can find a way to steal it when I leave.",
-     "So You've Crash-Landed on an Unknown Planet (Now What?)",
+     "chicken Col. Sanders are both fired, as soon I get back home.\n\nAt "
+     "least there’s air here.  Maybe I can find a way to steal it when I "
+     "leave.", "So You've Crash-Landed on an Unknown Planet (Now What?)",
      "air supply, Dark Helmet", False, False),
     ("tip_of_the_day", "Progress", "2020-10-25", "00:00",
-     "Strive for progress, not perfection.", "", "inspire, progress, success",
+     "Strive for progress, not perfection.",
+     "https://themindfool.com/5-reasons-why-strive-progress-not-perfection/",
+     "inspire, progress, success",
      False, False),
     ("tip_of_the_day", "Goals", "2020-10-26", "00:00",
      "What you get by achieving your goals is not as important as what you "
-     "become by achieving your goals.", "", "inspire, goals, achievement",
-     False, False),
+     "become by achieving your goals.", "Henry David Thoreau",
+     "inspire, goals, achievement", False, False),
     ("tip_of_the_day", "Vision", "2020-10-27", "00:00",
      "Chase the vision, not the money.  The money will end up following you.",
-     "", "inspire, vision", False, False)
+     "Tony Hsieh, Zappos.com CEO", "inspire, vision", False, False),
+    ("prez_skroob", "Vacation Plans?", "5454-03-10", "2:25",
+     "I need some time off Planet Spaceball.  New Vegas sounds nice, but "
+     "flights are too expensive right now.  Druidia?  Meh.  Druids are too "
+     "stodgy.", "How to Stay in New Vegas on $150,000 a Day",
+     "vacation, Druidia, Vegas", True, False)
 ]
 
 
