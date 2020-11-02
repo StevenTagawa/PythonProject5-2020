@@ -61,11 +61,11 @@ class EntryForm(FlaskForm):
     date = DateField(
         "Date",
         default=datetime.datetime.today,
-        validators=[DataRequired()],
+        validators=[InputRequired()],
         description=" (yyyy-mm-dd)")
     time_spent = TimeField(
         "Time Spent",
-        validators=[DataRequired()],
+        validators=[InputRequired()],
         description=" (hours:minutes)")
     learned = TextAreaField("What You Learned", validators=[InputRequired()])
     resources = TextAreaField("Resources to Remember")
@@ -81,15 +81,21 @@ class EntryForm(FlaskForm):
     def validate_date(form, field):  # noqa
         if type(field) == str:
             try:
-                _ = datetime.datetime.strptime(field.data, "%Y-%m-%d")
+                field.data = datetime.datetime.strptime(field.data, "%Y-%m-%d")
             except ValueError:
                 raise ValidationError(
                     "Please enter a date in the format yyyy-mm-dd.")
+        else:
+            raise ValidationError(
+                "Please enter a date in the format yyyy-mm-dd.")
 
     def validate_time_spent(form, field):  # noqa
         if type(field) == str:
             try:
-                _ = time.strptime(field.data, "%H:%M")
+                field.data = datetime.time.strptime(field.data, "%H:%M")
             except ValueError:
                 raise ValidationError(
                     "Please enter a time spent in the format hh:mm.")
+        else:
+            raise ValidationError(
+                "Please enter a time spent in the format hh:mm.")
