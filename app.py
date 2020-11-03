@@ -299,10 +299,7 @@ def show_entry(entry_id):
         flash(message, category)
         return redirect(url_for("index"))
     # The template needs the entry's tags in list form.
-    tags = [tag.strip() for tag in entry.tags.split(",")]
-    # If there are no tags, send an empty list rather than an empty string.
-    if tags == [""]:
-        tags = []
+    tags = listify(entry.tags)
     # Set flag to show delete link (only if the user is the entry's author or is
     # god).
     if (current_user.is_authenticated and
@@ -337,7 +334,7 @@ def edit_entry(entry_id):
         flash("Cannot edit entry.", "error")
         return redirect(url_for("show_entry", entry_id=entry_id))
     form = forms.EntryForm()
-    old_tags = []
+    old_tags = ""
     # Only pre-populate the fields before initial display.
     if request.method == "GET":
         # Get the current tag list to compare to any changes the user makes.
