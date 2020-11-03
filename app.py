@@ -261,15 +261,7 @@ def create_entry():
             hidden=form.hidden.data)
         # Tags need to be added to the Tag and EntryTag tables.  Searches for
         # tags may be case-insensitive, but actual tags will be stored as-is.
-        if form.tags.data:
-            tags = form.tags.data.split(",")
-            for tag in tags:
-                tag = tag.strip()
-                try:
-                    tag = models.Tag.get(models.Tag.name == tag)
-                except models.DoesNotExist:
-                    tag = models.Tag.create(name=tag)
-                models.EntryTag.create(entry=entry, tag=tag)
+        update_tags(entry, entry.tags, "")
         flash("Entry saved.", "success")
         # Send the user back to their own page.
         return redirect(url_for("user_entries", user=user.username))
@@ -349,7 +341,7 @@ def edit_entry(entry_id):
     # Only pre-populate the fields before initial display.
     if request.method == "GET":
         # Get the current tag list to compare to any changes the user makes.
-        old_tags = [tag.name for tag in entry.get_tags()]
+        old_tags = entry.tags
         form.title.data = entry.title
         form.date.data = entry.date
         form.time_spent.data = entry.time_spent
@@ -375,19 +367,7 @@ def edit_entry(entry_id):
             entry.private = True
         entry.save()
         # Update tags (add new tags, delete deleted tags).
-        new_tags = form.tags.data.split(",")
-        for ndx in range(len(new_tags)):  # iterate through (but not over) list.
-            new_tags[ndx] = new_tags[ndx].strip()
-        for tag in old_tags:
-            if tag not in new_tags:
-                tag = models.Tag.get(models.Tag.name == tag)
-                entry_tag = models.EntryTag.get(
-                    models.EntryTag.entry == entry, models.EntryTag.tag == tag)
-                entry_tag.delete_instance()
-        for tag in new_tags:
-            if (tag != "") and (tag not in old_tags):
-                tag = models.Tag.create(name=tag)
-                models.EntryTag.create(entry=entry, tag=tag)
+        update_tags(entry, entry.tags, old_tags)
         flash("Entry edited.", "success")
         return redirect(url_for("show_entry", entry_id=entry_id))
     return render_template(
@@ -417,7 +397,7 @@ def delete_entry(entry_id):
         return redirect(url_for("show_entry", entry_id=entry_id))
     target_user = entry.user.username
     # Delete associated tags before deleting the entry.
-    models.EntryTag.delete().where(models.EntryTag.entry == entry)
+    update_tags(entry, "", entry.tags)
     entry.delete_instance()
     flash("Entry deleted.", "success")
     return redirect(url_for("user_entries", user=target_user))
@@ -442,6 +422,7 @@ def show_tag(tag):
         flash(f"Tag {tag} not found.", "error")
         return redirect(get_last_route())
     all_entries = search_tag.entries()
+    print(len(all_entries))
     # Users who are not logged in do not see any hidden entries.
     if not current_user.is_authenticated:
         entries = []
@@ -462,8 +443,17 @@ def show_tag(tag):
         flash(f"Tag {tag} not found.", "error")
         # Note request.referrer actually works for non-form views.
         return redirect(request.referrer)
-    return render_template("tag_listing.html", entries=entries, user="",
-                           god=False, home=False, by="All", tag=tag)
+    if current_user.is_authenticated:
+        user_ = current_user.username
+        if current_user.god:
+            god = True
+        else:
+            god = False
+    else:
+        god = False
+        user_ = ""
+    return render_template("tag_listing.html", entries=entries, user=user_,
+                           god=god, home=False, by="All", tag=tag)
 
 
 # Supporting functions.
@@ -482,6 +472,55 @@ def get_last_route():
         return url_for(last_route, tag=cur_tag)
     else:
         return url_for(last_route)
+
+
+def update_tags(entry, new_tags: str, old_tags: str) -> None:
+    """Updates tag references as needed."""
+    # Turn the tag strings into lists (without empty members).
+    new_tags = listify(new_tags)
+    old_tags = listify(old_tags)
+    # Delete removed tags:
+    for tag in old_tags:
+        if tag not in new_tags:
+            # First, delete the instance of the entry/tag combo.
+            search_tag = models.Tag.get(models.Tag.name == tag)
+            entry_tag = models.EntryTag.get(
+                models.EntryTag.entry == entry,
+                models.EntryTag.tag == search_tag)
+            entry_tag.delete_instance()
+            # If no more instances of the tag exist, delete the tag itself.
+            search = (models.EntryTag.select()
+                      .where(models.EntryTag.tag == search_tag))
+            if len(search) == 0:
+                search_tag.delete_instance()
+    # Add new tags:
+    for tag in new_tags:
+        if tag not in old_tags:
+            # First, see if the tag already exists; create it if it doesn't.
+            try:
+                search_tag = models.Tag.create(name=tag)
+            except models.IntegrityError:
+                search_tag = models.Tag.get(models.Tag.name == tag)
+            # Check to see if the entry/tag combo already exists.
+            try:
+                models.EntryTag.get(
+                    models.EntryTag.entry == entry,
+                    models.EntryTag.tag == search_tag)
+            # If it does, do nothing.  If it doesn't, create it.
+            except models.DoesNotExist:
+                models.EntryTag.create(entry=entry, tag=search_tag)
+    return
+
+
+def listify(string: str) -> list:
+    """Turns a CSV string into a list, deleting any empty members."""
+    raw_list = string.split(",")
+    final_list = []
+    for tag in raw_list:
+        stripped_tag = tag.strip()
+        if stripped_tag != "":
+            final_list.append(stripped_tag)
+    return final_list
 
 
 # EXECUTION BEGINS HERE

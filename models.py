@@ -57,7 +57,8 @@ class Entry(Model):
 
 
 class Tag(Model):
-    name = CharField(max_length=256)
+    id = AutoField()
+    name = CharField(max_length=256, unique=True)
 
     class Meta:
         database = DATABASE
