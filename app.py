@@ -419,7 +419,6 @@ def show_tag(tag):
         flash(f"Tag {tag} not found.", "error")
         return redirect(get_last_route())
     all_entries = search_tag.entries()
-    print(len(all_entries))
     # Users who are not logged in do not see any hidden entries.
     if not current_user.is_authenticated:
         entries = []
@@ -433,7 +432,7 @@ def show_tag(tag):
             if not (entry.hidden and entry.user.id != current_user.id):
                 entries.append(entry)
     else:
-        entries = all_entries
+        entries = list(all_entries)
     # If all matching records got filtered out, do not reveal that there were
     # matching hidden records.
     if len(entries) == 0:
@@ -449,6 +448,9 @@ def show_tag(tag):
     else:
         god = False
         user_ = ""
+    # For some reason this list is always in descending order.  Reverse it to be
+    # consistent with other listings.
+    entries.reverse()
     return render_template("tag_listing.html", entries=entries, user=user_,
                            god=god, home=False, by="All", tag=tag)
 

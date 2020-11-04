@@ -53,6 +53,7 @@ class Entry(Model):
                 .join(EntryTag)
                 .join(Entry)
                 .where(Entry.id == self.id)
+                .order_by(Entry.date.asc())
                 )
 
 
